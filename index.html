@@ -1035,21 +1035,22 @@
           <table class="table table-hover fon-table align-middle">
             <thead>
               <tr>
-                <th style="width: 130px;">รหัสคำขอ</th>
-                <th style="width: 140px;">วัน-เวลา</th>
+                <th style="width: 115px;">รหัสคำขอ</th>
+                <th style="width: 115px;">วัน-เวลาแจ้ง</th>
                 <th>ระบบงาน</th>
                 <th>หน่วยงานต้นสังกัด</th>
                 <th>ผู้แจ้ง / ติดต่อ</th>
                 <th>ประเภท &amp; รายละเอียด</th>
-                <th style="width: 120px;">สถานะ</th>
+                <th style="width: 110px;">สถานะ</th>
+                <th style="width: 150px;">ผู้รับงาน / วันเวลา</th>
                 <th>บันทึกแอดมิน</th>
-                <th style="width: 100px;" class="text-center">การจัดการ</th>
+                <th style="width: 120px;" class="text-center">การจัดการ</th>
               </tr>
             </thead>
             <tbody id="adminTicketsTbody">
               <tr>
-                <td colspan="9" class="text-center py-4 text-muted">
-                  <span class="spinner-border spinner-border-sm me-2"></span>กำลังโหลดรายการคำขอจากฐานข้อมูล...
+                <td colspan="10" class="text-center py-4 text-muted">
+                  <span class="spinner-border spinner-border-sm me-2"></span>กำลังเตรียมข้อมูล...
                 </td>
               </tr>
             </tbody>
@@ -1535,6 +1536,7 @@
                   <strong class="d-block mb-1"><i class="fas fa-images text-danger me-1"></i>รูปภาพประกอบที่แนบมา:</strong>
                   <div id="actionImagesGrid" class="d-flex flex-wrap gap-2"></div>
                 </div>
+                <div class="col-12 mt-2 pt-2 border-top" id="actionAuditInfo"></div>
               </div>
             </div>
 
@@ -2460,7 +2462,7 @@
         });
       }
 
-      // Chart 2: System Distribution (Bar Chart with DataLabels)
+      // Chart 2: System Distribution (Bar Chart with Multi-Color System Palette & DataLabels)
       const ctxSystems = document.getElementById('chartSystemDistribution');
       if (ctxSystems) {
         if (chartSystemDistributionInstance) chartSystemDistributionInstance.destroy();
@@ -2472,15 +2474,17 @@
           'ระบบวิจัย': 3,
           'ระบบ EdPEx': 2
         };
+        const sysLabels = Object.keys(sysData);
+        const sysBarColors = sysLabels.map(lbl => getSystemColorStyle(lbl).bar);
 
         chartSystemDistributionInstance = new Chart(ctxSystems, {
           type: 'bar',
           data: {
-            labels: Object.keys(sysData),
+            labels: sysLabels,
             datasets: [{
               label: 'จำนวนคำขอ',
               data: Object.values(sysData).map(v => Number(v || 0)),
-              backgroundColor: '#7a0c1e',
+              backgroundColor: sysBarColors,
               borderRadius: 6,
               maxBarThickness: 64
             }]
@@ -2496,7 +2500,9 @@
                 anchor: 'end',
                 align: 'top',
                 offset: 2,
-                color: '#7a0c1e',
+                color: function(ctx) {
+                  return sysBarColors[ctx.dataIndex] || '#7a0c1e';
+                },
                 font: { family: 'Sarabun', weight: 'bold', size: 12 },
                 formatter: function(value) {
                   return value.toLocaleString('th-TH');
@@ -2513,6 +2519,110 @@
       }
     }
 
+    function getSystemColorStyle(sysName) {
+      const name = String(sysName || '').trim();
+      const palette = [
+        { match: ['บุคลากร', 'FONMIS'], bg: '#dbeafe', text: '#1e40af', border: '#93c5fd', bar: '#2563eb' },
+        { match: ['ครุภัณฑ์ (เดิม)'], bg: '#ede9fe', text: '#5b21b6', border: '#c4b5fd', bar: '#7c3aed' },
+        { match: ['ครุภัณฑ์'], bg: '#f3e8ff', text: '#6b21a8', border: '#d8b4fe', bar: '#9333ea' },
+        { match: ['งานแผน', 'งบประมาณ (งานแผน)'], bg: '#fef3c7', text: '#92400e', border: '#fcd34d', bar: '#d97706' },
+        { match: ['งานการเงิน', 'งบประมาณ (งานการเงิน)'], bg: '#d1fae5', text: '#065f46', border: '#6ee7b7', bar: '#059669' },
+        { match: ['วิจัย นวัตกรรม', 'สิ่งประดิษฐ์'], bg: '#cffafe', text: '#155e75', border: '#67e8f9', bar: '#0891b2' },
+        { match: ['บริการวิชาการ'], bg: '#fce7f3', text: '#9d174d', border: '#f9a8d4', bar: '#db2777' },
+        { match: ['ด้านกิจการนักศึกษา'], bg: '#e0e7ff', text: '#3730a3', border: '#a5b4fc', bar: '#4f46e5' },
+        { match: ['ศิลปวัฒนธรรม', 'ทำนุบำรุง'], bg: '#ffedd5', text: '#9a3412', border: '#fdba74', bar: '#ea580c' },
+        { match: ['โครงการด้านวิชาการ'], bg: '#e0f2fe', text: '#075985', border: '#7dd3fc', bar: '#0284c7' },
+        { match: ['โครงการด้านกิจการนักศึกษา'], bg: '#fae8ff', text: '#86198f', border: '#f0abfc', bar: '#c026d3' },
+        { match: ['โครงการด้านวิจัย'], bg: '#ccfbf1', text: '#115e59', border: '#5eead4', bar: '#0d9488' },
+        { match: ['FTES', 'FTE', 'การเรียนการสอน'], bg: '#dcfce7', text: '#166534', border: '#86efac', bar: '#16a34a' },
+        { match: ['สนับสนุนและบริการนักศึกษา', 'ภาระงาน'], bg: '#fef9c3', text: '#854d0e', border: '#fde047', bar: '#ca8a04' },
+        { match: ['ประเมิน PA', 'PA วิทยาลัย'], bg: '#fee2e2', text: '#991b1b', border: '#fca5a5', bar: '#dc2626' },
+        { match: ['EdPEx'], bg: '#ffe4e6', text: '#9f1239', border: '#fda4af', bar: '#e11d48' }
+      ];
+
+      for (const item of palette) {
+        if (item.match.some(k => name.includes(k))) {
+          return item;
+        }
+      }
+
+      let hash = 0;
+      for (let i = 0; i < name.length; i++) {
+        hash = name.charCodeAt(i) + ((hash << 5) - hash);
+      }
+      return palette[Math.abs(hash) % palette.length];
+    }
+
+    function getCurrentLoggedAdmin() {
+      try {
+        const saved = sessionStorage.getItem('fon_admin_session');
+        if (saved) return JSON.parse(saved);
+      } catch (e) {}
+      return { name: 'ผู้ดูแลระบบ', org: 'คณะพยาบาลศาสตร์', email: '' };
+    }
+
+    function parseAdminAudit(rawNotes, resolvedAt) {
+      const raw = String(rawNotes || '').trim();
+      const regex = /\[ผู้รับงาน:\s*([^|\]]+)\|\s*([^\]]+)\]\s*$/;
+      const match = raw.match(regex);
+      if (match) {
+        return {
+          noteText: raw.replace(regex, '').trim(),
+          adminName: match[1].trim(),
+          actionTime: formatShortDateTime(match[2].trim())
+        };
+      }
+      return {
+        noteText: raw,
+        adminName: '',
+        actionTime: resolvedAt ? formatShortDateTime(resolvedAt) : ''
+      };
+    }
+
+    function packAdminNoteWithAudit(cleanNote, adminName, timeStr) {
+      const stripped = String(cleanNote || '').replace(/\[ผู้รับงาน:\s*[^|\]]+\|\s*[^\]]+\]\s*$/, '').trim();
+      const stamp = `[ผู้รับงาน: ${adminName || 'ผู้ดูแลระบบ'} | ${timeStr}]`;
+      return stripped ? `${stripped} ${stamp}` : stamp;
+    }
+
+    function getNowShortDateTime() {
+      const d = new Date();
+      const dd = String(d.getDate()).padStart(2, '0');
+      const mm = String(d.getMonth() + 1).padStart(2, '0');
+      const yyyy = d.getFullYear();
+      const hh = String(d.getHours()).padStart(2, '0');
+      const min = String(d.getMinutes()).padStart(2, '0');
+      return `${dd}/${mm}/${yyyy} ${hh}:${min}`;
+    }
+
+    function claimTicketQuick(ticketId) {
+      const t = adminTickets.find(item => item.ticket_id === ticketId);
+      if (!t) return;
+
+      const currentAdmin = getCurrentLoggedAdmin();
+      const nowStr = getNowShortDateTime();
+      const audit = parseAdminAudit(t.admin_notes, t.resolved_at);
+      const newStatus = t.status.includes('รอ') ? 'กำลังดำเนินการ' : t.status;
+      const packedNotes = packAdminNoteWithAudit(audit.noteText || 'รับเรื่องดำเนินการ', currentAdmin.name, nowStr);
+
+      const queryParams = new URLSearchParams({
+        action: 'update_ticket',
+        ticket_id: ticketId,
+        new_status: newStatus,
+        admin_notes: packedNotes
+      });
+
+      fetch(getGasUrl() + '?' + queryParams.toString(), { method: 'GET', mode: 'cors' })
+        .then(res => res.json())
+        .then(() => {
+          finishActionUpdate(ticketId, newStatus, packedNotes, null);
+          showToast(`รับงานคำขอ ${ticketId} โดยคุณ ${currentAdmin.name} เรียบร้อยแล้ว`);
+        })
+        .catch(() => {
+          finishActionUpdate(ticketId, newStatus, packedNotes, null);
+        });
+    }
+
     function renderAdminTicketsTable() {
       const tbody = document.getElementById('adminTicketsTbody');
       const countBadge = document.getElementById('adminTicketCountBadge');
@@ -2520,6 +2630,7 @@
 
       const filtered = adminTickets.filter(t => {
         const parsed = parseTicketDetailAndImages(t.issue_detail);
+        const audit = parseAdminAudit(t.admin_notes, t.resolved_at);
         const matchStatus = (currentAdminFilterStatus === 'all' || t.status.includes(currentAdminFilterStatus));
         const matchCollege = (currentAdminFilterCollege === 'all' || t.college_name === currentAdminFilterCollege);
         const matchSearch = (!currentAdminSearch ||
@@ -2527,7 +2638,8 @@
           t.reporter_name.toLowerCase().includes(currentAdminSearch) ||
           (t.reporter_contact && t.reporter_contact.toLowerCase().includes(currentAdminSearch)) ||
           t.system_name.toLowerCase().includes(currentAdminSearch) ||
-          parsed.text.toLowerCase().includes(currentAdminSearch)
+          parsed.text.toLowerCase().includes(currentAdminSearch) ||
+          (audit.adminName && audit.adminName.toLowerCase().includes(currentAdminSearch))
         );
         return matchStatus && matchCollege && matchSearch;
       });
@@ -2537,7 +2649,7 @@
       if (filtered.length === 0) {
         tbody.innerHTML = `
           <tr>
-            <td colspan="9" class="text-center py-4 text-muted">
+            <td colspan="10" class="text-center py-4 text-muted">
               <i class="fas fa-inbox fs-4 mb-1 d-block"></i>
               ไม่พบคำขอที่ตรงกับเงื่อนไขการค้นหา
             </td>
@@ -2554,7 +2666,9 @@
         else if (t.status.includes('แก้ไข') || t.status.includes('เสร็จ')) { badgeClass = 'status-resolved'; icon = 'fa-check'; }
 
         const parsed = parseTicketDetailAndImages(t.issue_detail);
+        const audit = parseAdminAudit(t.admin_notes, t.resolved_at);
         const shortDate = formatShortDateTime(t.created_at);
+        const sysStyle = getSystemColorStyle(t.system_name || 'ทั่วไป');
 
         let imgBadgesHtml = '';
         if (parsed.images.length > 0) {
@@ -2565,12 +2679,30 @@
             `</div>`;
         }
 
+        let handlerHtml = `<span class="text-black-50" style="font-size: 0.75rem;">- รอรับงาน -</span>`;
+        if (audit.adminName || audit.actionTime) {
+          handlerHtml = `
+            <div style="line-height: 1.2;">
+              <div class="fw-semibold text-dark" style="font-size: 0.77rem;">
+                <i class="fas fa-user-shield text-primary me-1"></i>${audit.adminName || 'แอดมินส่วนกลาง'}
+              </div>
+              ${audit.actionTime ? `<div class="text-muted" style="font-size: 0.72rem;"><i class="far fa-clock me-1"></i>${audit.actionTime}</div>` : ''}
+            </div>
+          `;
+        }
+
+        const showClaimBtn = t.status.includes('รอ') || !audit.adminName;
+
         html += `
           <tr>
             <td style="white-space: nowrap;"><strong class="text-danger" style="font-family: monospace; font-size: 0.82rem;">${t.ticket_id}</strong></td>
             <td class="text-muted" style="white-space: nowrap; font-size: 0.78rem;">${shortDate}</td>
-            <td style="white-space: nowrap;"><span class="badge bg-light text-dark border" style="font-size: 0.76rem;">${t.system_name || 'ทั่วไป'}</span></td>
-            <td class="fw-semibold" style="font-size: 0.8rem; max-width: 180px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${t.college_name || '-'}">${t.college_name || '-'}</td>
+            <td style="white-space: nowrap;">
+              <span class="badge rounded-pill px-2 py-1" style="background: ${sysStyle.bg}; color: ${sysStyle.text}; border: 1px solid ${sysStyle.border}; font-size: 0.75rem; font-weight: 600;">
+                ${t.system_name || 'ทั่วไป'}
+              </span>
+            </td>
+            <td class="fw-semibold" style="font-size: 0.8rem; max-width: 170px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${t.college_name || '-'}">${t.college_name || '-'}</td>
             <td style="white-space: nowrap;">
               <span class="fw-semibold">${t.reporter_name || '-'}</span>
               <span class="text-muted ms-1" style="font-size: 0.78rem;"><i class="fas fa-phone-volume me-1"></i>${t.reporter_contact || '-'}</span>
@@ -2578,7 +2710,7 @@
             <td>
               <div class="d-flex align-items-center flex-wrap gap-1">
                 <span class="badge bg-danger-subtle text-danger" style="font-size: 0.7rem;">${t.issue_type || '-'}</span>
-                <span class="text-muted text-truncate" style="max-width: 210px; font-size: 0.8rem;" title="${parsed.text.replace(/"/g, '&quot;')}">${parsed.text}</span>
+                <span class="text-muted text-truncate" style="max-width: 190px; font-size: 0.8rem;" title="${parsed.text.replace(/"/g, '&quot;')}">${parsed.text}</span>
                 ${imgBadgesHtml}
               </div>
             </td>
@@ -2587,11 +2719,19 @@
                 <i class="fas ${icon} me-1"></i>${t.status}
               </span>
             </td>
-            <td class="text-muted text-truncate" style="max-width: 150px; font-size: 0.79rem;" title="${(t.admin_notes || '').replace(/"/g, '&quot;')}">${t.admin_notes || '<span class="text-black-50">-</span>'}</td>
+            <td style="white-space: nowrap;">${handlerHtml}</td>
+            <td class="text-muted text-truncate" style="max-width: 140px; font-size: 0.79rem;" title="${(audit.noteText || '').replace(/"/g, '&quot;')}">${audit.noteText || '<span class="text-black-50">-</span>'}</td>
             <td class="text-center" style="white-space: nowrap;">
-              <button type="button" class="btn btn-outline-danger btn-sm rounded-pill px-2 py-0" style="font-size: 0.76rem;" onclick="openTicketActionModal('${t.ticket_id}')">
-                <i class="fas fa-pen-to-square me-1"></i>จัดการ
-              </button>
+              <div class="d-inline-flex align-items-center gap-1">
+                ${showClaimBtn ? `
+                  <button type="button" class="btn btn-primary btn-sm rounded-pill px-2 py-0" style="font-size: 0.74rem; background: #2563eb; border-color: #2563eb;" onclick="claimTicketQuick('${t.ticket_id}')" title="กดรับงานทันทีในชื่อของคุณ">
+                    <i class="fas fa-hand-pointer me-1"></i>รับงาน
+                  </button>
+                ` : ''}
+                <button type="button" class="btn btn-outline-danger btn-sm rounded-pill px-2 py-0" style="font-size: 0.74rem;" onclick="openTicketActionModal('${t.ticket_id}')">
+                  <i class="fas fa-pen-to-square me-1"></i>จัดการ
+                </button>
+              </div>
             </td>
           </tr>
         `;
@@ -2605,6 +2745,8 @@
       if (!t) return;
 
       const parsed = parseTicketDetailAndImages(t.issue_detail);
+      const audit = parseAdminAudit(t.admin_notes, t.resolved_at);
+      const currentAdmin = getCurrentLoggedAdmin();
 
       document.getElementById('actionTicketId').value = t.ticket_id;
       document.getElementById('actionTicketIdBadge').innerText = 'รหัสคำขอ: ' + t.ticket_id;
@@ -2614,7 +2756,16 @@
       document.getElementById('actionContact').innerText = t.reporter_contact || '-';
       document.getElementById('actionDetail').innerText = parsed.text;
       document.getElementById('actionNewStatus').value = t.status || 'รอดำเนินการ';
-      document.getElementById('actionAdminNotes').value = t.admin_notes || '';
+      document.getElementById('actionAdminNotes').value = audit.noteText || '';
+
+      const auditInfoEl = document.getElementById('actionAuditInfo');
+      if (auditInfoEl) {
+        if (audit.adminName || audit.actionTime) {
+          auditInfoEl.innerHTML = `<span class="text-primary fw-semibold"><i class="fas fa-user-shield me-1"></i>ผู้รับงานล่าสุด: ${audit.adminName || 'แอดมินส่วนกลาง'} (${audit.actionTime || '-'})</span> <span class="text-muted ms-2">| กำลังบันทึกโดย: <b>${currentAdmin.name}</b></span>`;
+        } else {
+          auditInfoEl.innerHTML = `<span class="text-success fw-semibold"><i class="fas fa-user-check me-1"></i>ผู้กดรับงานและบันทึกครั้งนี้: ${currentAdmin.name} (${getNowShortDateTime()})</span>`;
+        }
+      }
 
       const imgWrap = document.getElementById('actionImagesWrapper');
       const imgGrid = document.getElementById('actionImagesGrid');
@@ -2638,8 +2789,12 @@
       event.preventDefault();
       const ticketId = document.getElementById('actionTicketId').value;
       const newStatus = document.getElementById('actionNewStatus').value;
-      const adminNotes = document.getElementById('actionAdminNotes').value;
+      const rawNoteInput = document.getElementById('actionAdminNotes').value;
       const submitBtn = document.getElementById('actionSubmitBtn');
+
+      const currentAdmin = getCurrentLoggedAdmin();
+      const nowStr = getNowShortDateTime();
+      const packedAdminNotes = packAdminNoteWithAudit(rawNoteInput, currentAdmin.name, nowStr);
 
       if (submitBtn) {
         submitBtn.disabled = true;
@@ -2650,7 +2805,7 @@
         action: 'update_ticket',
         ticket_id: ticketId,
         new_status: newStatus,
-        admin_notes: adminNotes
+        admin_notes: packedAdminNotes
       });
 
       const apiUrl = getGasUrl();
@@ -2660,10 +2815,10 @@
       })
       .then(res => res.json())
       .then(() => {
-        finishActionUpdate(ticketId, newStatus, adminNotes, submitBtn);
+        finishActionUpdate(ticketId, newStatus, packedAdminNotes, submitBtn);
       })
       .catch(() => {
-        finishActionUpdate(ticketId, newStatus, adminNotes, submitBtn);
+        finishActionUpdate(ticketId, newStatus, packedAdminNotes, submitBtn);
       });
     }
 
@@ -2677,6 +2832,9 @@
       if (t) {
         t.status = newStatus;
         t.admin_notes = adminNotes;
+        if (newStatus.includes('แก้ไข') || newStatus.includes('เสร็จ')) {
+          t.resolved_at = getNowShortDateTime();
+        }
       }
 
       let p = 0, pr = 0, r = 0;
@@ -2690,7 +2848,7 @@
       document.getElementById('kpiResolved').innerText = r;
 
       const modalEl = document.getElementById('ticketActionModal');
-      const modal = bootstrap.Modal.getInstance(modalEl);
+      const modal = modalEl ? bootstrap.Modal.getInstance(modalEl) : null;
       if (modal) modal.hide();
 
       renderAdminTicketsTable();
@@ -2704,10 +2862,11 @@
       }
 
       let csv = '\uFEFF';
-      csv += 'รหัสคำขอ,วันเวลาที่แจ้ง,ระบบงาน,วิทยาลัยต้นสังกัด,ผู้แจ้ง,ช่องทางติดต่อ,ประเภทปัญหา,รายละเอียดปัญหา,สถานะ,บันทึกการแก้ไข\n';
+      csv += 'รหัสคำขอ,วันเวลาที่แจ้ง,ระบบงาน,วิทยาลัยต้นสังกัด,ผู้แจ้ง,ช่องทางติดต่อ,ประเภทปัญหา,รายละเอียดปัญหา,สถานะ,ผู้รับงาน,วันเวลาที่รับงาน/อัปเดต,บันทึกการแก้ไข\n';
 
       adminTickets.forEach(t => {
         const parsed = parseTicketDetailAndImages(t.issue_detail);
+        const audit = parseAdminAudit(t.admin_notes, t.resolved_at);
         const detailExport = parsed.text + (parsed.images.length > 0 ? ` [แนบรูป ${parsed.images.length} รูป]` : '');
         const row = [
           `"${t.ticket_id || ''}"`,
@@ -2719,7 +2878,9 @@
           `"${t.issue_type || ''}"`,
           `"${detailExport.replace(/"/g, '""')}"`,
           `"${t.status || ''}"`,
-          `"${(t.admin_notes || '').replace(/"/g, '""')}"`
+          `"${(audit.adminName || '').replace(/"/g, '""')}"`,
+          `"${(audit.actionTime || '').replace(/"/g, '""')}"`,
+          `"${(audit.noteText || '').replace(/"/g, '""')}"`
         ];
         csv += row.join(',') + '\n';
       });
@@ -2899,7 +3060,9 @@
         const step3Color = isResolved ? '#10b981' : '#cbd5e1';
 
         const parsed = parseTicketDetailAndImages(t.issue_detail);
+        const audit = parseAdminAudit(t.admin_notes, t.resolved_at);
         const shortDate = formatShortDateTime(t.created_at);
+        const sysStyle = getSystemColorStyle(t.system_name || 'ทั่วไป');
 
         let userImagesHtml = '';
         if (parsed.images.length > 0) {
@@ -2937,7 +3100,10 @@
 
             <div class="row g-2 small mt-1">
               <div class="col-sm-6">
-                <span class="text-muted">ระบบงาน:</span> <strong class="text-dark">${t.system_name || 'ทั่วไป'}</strong>
+                <span class="text-muted">ระบบงาน:</span>
+                <span class="badge rounded-pill px-2 py-1 ms-1" style="background: ${sysStyle.bg}; color: ${sysStyle.text}; border: 1px solid ${sysStyle.border}; font-size: 0.74rem; font-weight: 600;">
+                  ${t.system_name || 'ทั่วไป'}
+                </span>
               </div>
               <div class="col-sm-6">
                 <span class="text-muted">หน่วยงาน:</span> <strong class="text-dark">${t.college_name || '-'}</strong>
@@ -2949,15 +3115,18 @@
               ${userImagesHtml}
             </div>
 
-            ${t.admin_notes ? `
+            ${(audit.noteText || audit.adminName) ? `
               <div class="mt-2 p-2 rounded-2 small" style="background: #ecfdf5; border: 1px solid #a7f3d0; color: #065f46;">
-                <strong><i class="fas fa-comment-dots me-1"></i>ผลการดำเนินการ / ข้อความจากผู้ดูแลระบบ:</strong>
-                <div class="mt-1">${t.admin_notes}</div>
-                ${t.resolved_at ? `<div class="text-muted mt-1" style="font-size: 0.72rem;">อัปเดตเมื่อ: ${t.resolved_at}</div>` : ''}
+                <div class="d-flex flex-wrap justify-content-between align-items-center gap-1">
+                  <strong><i class="fas fa-comment-dots me-1"></i>ผลการดำเนินการ / ข้อความจากผู้ดูแลระบบ:</strong>
+                  ${audit.adminName ? `<span class="badge bg-white text-success border border-success"><i class="fas fa-user-shield me-1"></i>ผู้รับผิดชอบ: ${audit.adminName}</span>` : ''}
+                </div>
+                ${audit.noteText ? `<div class="mt-1">${audit.noteText}</div>` : ''}
+                ${audit.actionTime ? `<div class="text-muted mt-1" style="font-size: 0.72rem;"><i class="far fa-clock me-1"></i>วัน-เวลาที่รับงาน/อัปเดต: ${audit.actionTime}</div>` : ''}
               </div>
             ` : `
               <div class="mt-2 p-2 rounded-2 small text-muted" style="background: #fffbeb; border: 1px solid #fde68a;">
-                <i class="fas fa-hourglass-half text-warning me-1"></i>อยู่ระหว่างรอผู้ดูแลระบบตรวจสอบและบันทึกผลการแก้ไข
+                <i class="fas fa-hourglass-half text-warning me-1"></i>อยู่ระหว่างรอผู้ดูแลระบบกดรับงานและตรวจสอบแก้ไข
               </div>
             `}
           </div>
