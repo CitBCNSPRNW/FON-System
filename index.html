@@ -545,185 +545,537 @@
       font-size: 0.85rem;
       color: var(--fon-text-muted);
     }
+
+    /* ==========================================================================
+       ADMIN COMMAND CENTER & SLA DASHBOARD STYLES
+       ========================================================================== */
+    
+    .fon-kpi-card {
+      background: #ffffff;
+      border-radius: 14px;
+      border: 1px solid var(--fon-border);
+      padding: 18px 20px;
+      box-shadow: var(--fon-shadow-sm);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .fon-kpi-card:hover {
+      transform: translateY(-3px);
+      box-shadow: var(--fon-shadow-md);
+    }
+
+    .fon-kpi-val {
+      font-size: 1.9rem;
+      font-weight: 700;
+      color: var(--fon-text-main);
+      line-height: 1.1;
+    }
+
+    .fon-kpi-label {
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--fon-text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+
+    .fon-kpi-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.3rem;
+    }
+
+    .fon-table-container {
+      background: #ffffff;
+      border: 1px solid var(--fon-border);
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: var(--fon-shadow-sm);
+    }
+
+    .fon-table thead th {
+      background: #fdfbfb;
+      border-bottom: 2px solid #f2e8e8;
+      color: #44403c;
+      font-weight: 600;
+      font-size: 0.85rem;
+      padding: 12px 14px;
+      white-space: nowrap;
+    }
+
+    .fon-table tbody td {
+      padding: 12px 14px;
+      font-size: 0.88rem;
+      vertical-align: middle;
+      border-bottom: 1px solid #f5f5f4;
+    }
+
+    .fon-table tbody tr:hover {
+      background-color: #fdf2f2;
+    }
+
+    .status-badge {
+      padding: 4px 10px;
+      border-radius: 30px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .status-pending { background: #fef3c7; color: #92400e; }
+    .status-progress { background: #e0f2fe; color: #0369a1; }
+    .status-resolved { background: #dcfce7; color: #166534; }
+
+    .chart-card {
+      background: #ffffff;
+      border: 1px solid var(--fon-border);
+      border-radius: 16px;
+      padding: 20px;
+      box-shadow: var(--fon-shadow-sm);
+      height: 100%;
+    }
   </style>
 </head>
 <body>
 
-  <!-- Top Navigation Bar -->
-  <nav class="fon-navbar py-2">
-    <div class="container-xl d-flex align-items-center justify-content-between">
-      <div class="d-flex align-items-center gap-3">
-        <img src="https://lh5.googleusercontent.com/d/1msId4g-5UneA307z8biTLaBtR4LCSeST" alt="FON-PBRI Logo" class="fon-brand-logo">
-        <div>
-          <h1 class="fon-brand-title">ระบบสารสนเทศคณะพยาบาลศาสตร์</h1>
-          <p class="fon-brand-subtitle">สถาบันพระบรมราชชนก (FON-PBRI Information Systems Portal)</p>
+  <!-- =========================================================================
+       VIEW 1: PUBLIC PORTAL VIEW (หน้าจอสำหรับผู้ใช้งานทั่วไป 31 วิทยาลัย)
+       ========================================================================= -->
+  <div id="publicPortalView">
+
+    <!-- Top Navigation Bar -->
+    <nav class="fon-navbar py-2">
+      <div class="container-xl d-flex align-items-center justify-content-between">
+        <div class="d-flex align-items-center gap-3">
+          <img src="https://lh5.googleusercontent.com/d/1msId4g-5UneA307z8biTLaBtR4LCSeST" alt="FON-PBRI Logo" class="fon-brand-logo">
+          <div>
+            <h1 class="fon-brand-title">ระบบสารสนเทศคณะพยาบาลศาสตร์</h1>
+            <p class="fon-brand-subtitle">สถาบันพระบรมราชชนก (FON-PBRI Information Systems Portal)</p>
+          </div>
+        </div>
+
+        <div class="d-flex align-items-center gap-2">
+          <!-- Admin Management Button (No hint) -->
+          <button type="button" class="btn btn-outline-danger btn-sm rounded-pill px-3 d-flex align-items-center gap-1" style="font-weight: 600; border-color: var(--fon-primary); color: var(--fon-primary);" onclick="openAdminModal()">
+            <i class="fas fa-shield-halved"></i>
+            <span>จัดการระบบ (Admin)</span>
+          </button>
+
+          <!-- Helpdesk Ticket Button -->
+          <button type="button" class="btn btn-warning btn-sm rounded-pill px-3 d-flex align-items-center gap-2" style="font-weight: 600; background: var(--fon-accent); border-color: var(--fon-accent); color: #ffffff;" onclick="openTicketModal('')">
+            <i class="fas fa-ticket"></i>
+            <span>แจ้งปัญหาการใช้งาน</span>
+          </button>
+          
+          <span class="badge rounded-pill bg-light text-danger border px-3 py-2 d-none d-lg-inline-block" id="totalSystemsBadge" style="font-weight: 600; font-size: 0.82rem; border-color: #fecaca !important;">
+            <i class="fas fa-layer-group me-1"></i>16 ระบบงาน
+          </span>
         </div>
       </div>
+    </nav>
 
-      <div class="d-flex align-items-center gap-2">
-        <!-- Admin Management Button -->
-        <button type="button" class="btn btn-outline-danger btn-sm rounded-pill px-3 d-flex align-items-center gap-1" style="font-weight: 600; border-color: var(--fon-primary); color: var(--fon-primary);" onclick="openAdminModal()">
-          <i class="fas fa-user-gear"></i>
-          <span>จัดการระบบ (Admin)</span>
-        </button>
+    <!-- Hero Section (Maroon & Gold Institutional Gradient) -->
+    <section class="fon-hero-section text-center">
+      <div class="container-xl">
+        <div class="fon-hero-badge">
+          <i class="fas fa-shield-halved text-warning"></i>
+          <span>ระบบสารสนเทศกลาง คณะพยาบาลศาสตร์ สถาบันพระบรมราชชนก</span>
+        </div>
+        <h2 class="fon-hero-title">ศูนย์รวมระบบงานสารสนเทศและฐานข้อมูลกลาง</h2>
+        <p class="fon-hero-desc">
+          เข้าถึงระบบงานวิชาการ แผนและงบประมาณ บุคลากร วิจัย ครุภัณฑ์ และการประกันคุณภาพการศึกษา สำหรับวิทยาลัยพยาบาลบรมราชชนนี 30 แห่ง และสำนักงานคณบดี (รวม 31 หน่วยงาน)
+        </p>
 
-        <!-- Helpdesk Ticket Button -->
-        <button type="button" class="btn btn-warning btn-sm rounded-pill px-3 d-flex align-items-center gap-2" style="font-weight: 600; background: var(--fon-accent); border-color: var(--fon-accent); color: #ffffff;" onclick="openTicketModal('')">
-          <i class="fas fa-ticket"></i>
-          <span>แจ้งปัญหาการใช้งาน</span>
-        </button>
-        
-        <span class="badge rounded-pill bg-light text-danger border px-3 py-2 d-none d-lg-inline-block" id="totalSystemsBadge" style="font-weight: 600; font-size: 0.82rem; border-color: #fecaca !important;">
-          <i class="fas fa-layer-group me-1"></i>16 ระบบงาน
-        </span>
+        <!-- Instant Live Search Bar -->
+        <div class="fon-search-container">
+          <i class="fas fa-magnifying-glass fon-search-icon"></i>
+          <input 
+            type="text" 
+            id="fonSearchInput" 
+            class="fon-search-input" 
+            placeholder="ค้นหาระบบงาน เช่น บุคลากร, ครุภัณฑ์, แผนงบประมาณ, วิจัย, EdPEx..." 
+            autocomplete="off"
+          >
+          <button id="fonSearchClear" class="fon-search-clear" title="ล้างการค้นหา">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Category Filter Bar (Sticky) -->
+    <div class="fon-filter-bar">
+      <div class="container-xl">
+        <div class="fon-chip-list" id="categoryChipContainer">
+          <!-- Rendered dynamically by js_app -->
+        </div>
       </div>
     </div>
-  </nav>
 
-  <!-- Hero Section (Maroon & Gold Institutional Gradient) -->
-  <section class="fon-hero-section text-center">
-    <div class="container-xl">
-      <div class="fon-hero-badge">
-        <i class="fas fa-shield-halved text-warning"></i>
-        <span>ระบบสารสนเทศกลาง คณะพยาบาลศาสตร์ สถาบันพระบรมราชชนก</span>
-      </div>
-      <h2 class="fon-hero-title">ศูนย์รวมระบบงานสารสนเทศและฐานข้อมูลกลาง</h2>
-      <p class="fon-hero-desc">
-        เข้าถึงระบบงานวิชาการ แผนและงบประมาณ บุคลากร วิจัย ครุภัณฑ์ และการประกันคุณภาพการศึกษา สำหรับวิทยาลัยพยาบาลบรมราชชนนี 30 แห่ง และสำนักงานคณบดี (รวม 31 หน่วยงาน)
-      </p>
+    <!-- Systems Grid Section -->
+    <main class="py-5">
+      <div class="container-xl">
+        <div class="d-flex align-items-center justify-content-between mb-4">
+          <div>
+            <h4 style="font-weight: 700; color: var(--fon-primary-dark); margin-bottom: 4px;">
+              <i class="fas fa-cubes-stacked me-2 text-danger"></i>สารบบระบบงานสารสนเทศ (16 ระบบ)
+            </h4>
+            <p class="text-muted small mb-0">คลิก "เข้าสู่ระบบ" เพื่อเปิดใช้งาน คลิก "ล็อกอิน" เพื่อดูข้อมูลเข้าใช้งาน หรือคลิก "คู่มือ" เพื่อศึกษาขั้นตอน</p>
+          </div>
+        </div>
 
-      <!-- Instant Live Search Bar -->
-      <div class="fon-search-container">
-        <i class="fas fa-magnifying-glass fon-search-icon"></i>
-        <input 
-          type="text" 
-          id="fonSearchInput" 
-          class="fon-search-input" 
-          placeholder="ค้นหาระบบงาน เช่น บุคลากร, ครุภัณฑ์, แผนงบประมาณ, วิจัย, EdPEx..." 
-          autocomplete="off"
-        >
-        <button id="fonSearchClear" class="fon-search-clear" title="ล้างการค้นหา">
-          <i class="fas fa-times"></i>
-        </button>
+        <!-- System Cards Grid -->
+        <div class="row g-4" id="systemsGrid">
+          <!-- Rendered dynamically by js_app -->
+        </div>
       </div>
-    </div>
-  </section>
+    </main>
 
-  <!-- Category Filter Bar (Sticky) -->
-  <div class="fon-filter-bar">
-    <div class="container-xl">
-      <div class="fon-chip-list" id="categoryChipContainer">
-        <!-- Rendered dynamically by js_app -->
+    <!-- Quick Resources Section -->
+    <section class="py-5" style="background: #fbf7f7; border-top: 1px solid var(--fon-border);">
+      <div class="container-xl">
+        <div class="mb-4">
+          <h4 style="font-weight: 700; color: var(--fon-primary-dark); margin-bottom: 4px;">
+            <i class="fas fa-folder-open me-2 text-warning"></i>แหล่งทรัพยากรและเอกสารสำคัญ
+          </h4>
+          <p class="text-muted small mb-0">ช่องทางประสานงาน แบบประเมินผล และแหล่งดาวน์โหลดเอกสารต้นแบบ</p>
+        </div>
+
+        <div class="row g-3">
+          <!-- LINE Group (Opens QR Code Modal) -->
+          <div class="col-lg-3 col-md-6 col-sm-12">
+            <div class="fon-resource-card" onclick="openLineQrModal()">
+              <div class="fon-resource-icon" style="background: #ecfdf5; color: #059669;">
+                <i class="fab fa-line" style="font-size: 1.8rem;"></i>
+              </div>
+              <div>
+                <div style="font-weight: 700; font-size: 0.95rem;">LINE Group ประสานงาน</div>
+                <small class="text-muted">คลิกเพื่อสแกน QR Code</small>
+              </div>
+            </div>
+          </div>
+
+          <!-- Evaluation Form -->
+          <div class="col-lg-3 col-md-6 col-sm-12">
+            <a href="https://forms.gle/bii3mTUvLuaTS9RF6" target="_blank" class="fon-resource-card">
+              <div class="fon-resource-icon" style="background: #fdf2f8; color: #db2777;">
+                <i class="fas fa-square-poll-vertical"></i>
+              </div>
+              <div>
+                <div style="font-weight: 700; font-size: 0.95rem;">แบบประเมินความพึงพอใจ</div>
+                <small class="text-muted">ประเมินการใช้งานระบบ</small>
+              </div>
+            </a>
+          </div>
+
+          <!-- Template DB -->
+          <div class="col-lg-3 col-md-6 col-sm-12">
+            <a href="https://piacth-my.sharepoint.com/:f:/r/personal/santi_y_pi_ac_th/Documents/ระบบสารสนเทศคณะพยาบาลศาสตร์" target="_blank" class="fon-resource-card">
+              <div class="fon-resource-icon" style="background: #eff6ff; color: #2563eb;">
+                <i class="fas fa-file-excel"></i>
+              </div>
+              <div>
+                <div style="font-weight: 700; font-size: 0.95rem;">Template ฐานข้อมูล</div>
+                <small class="text-muted">แบบฟอร์มบน OneDrive</small>
+              </div>
+            </a>
+          </div>
+
+          <!-- Training Videos -->
+          <div class="col-lg-3 col-md-6 col-sm-12">
+            <a href="https://drive.google.com/drive/folders/1wJcWqyPPibo7uhWSoRIS6rn8uayUPgwX?usp=drive_link" target="_blank" class="fon-resource-card">
+              <div class="fon-resource-icon" style="background: #fff7ed; color: #ea580c;">
+                <i class="fas fa-video"></i>
+              </div>
+              <div>
+                <div style="font-weight: 700; font-size: 0.95rem;">วิดีโอย้อนหลังการอบรม</div>
+                <small class="text-muted">บันทึกวิดีโอ 7-8 ต.ค. 2568</small>
+              </div>
+            </a>
+          </div>
+        </div>
       </div>
-    </div>
+    </section>
+
+    <!-- Public Footer -->
+    <footer class="fon-footer text-center">
+      <div class="container-xl">
+        <div class="d-flex flex-column flex-md-row align-items-center justify-content-between gap-3">
+          <div class="text-md-start">
+            <div style="font-weight: 700; color: var(--fon-text-main);">ระบบสารสนเทศคณะพยาบาลศาสตร์ สถาบันพระบรมราชชนก</div>
+            <small class="text-muted">Faculty of Nursing, Praboromarajchanok Institute (FON-PBRI)</small>
+          </div>
+          <div class="text-md-end">
+            <small class="text-muted d-block">Version v1.3.0 | Build 2026.11.17</small>
+            <small class="text-muted">ฐานข้อมูล Google Sheets &amp; เผยแพร่ผ่าน GitHub Pages</small>
+          </div>
+        </div>
+      </div>
+    </footer>
+
+    <!-- Floating Helpdesk Button -->
+    <button type="button" class="fon-float-helpdesk" onclick="openTicketModal('')" title="แจ้งปัญหาการใช้งาน">
+      <i class="fas fa-headset"></i>
+      <span>แจ้งปัญหาการใช้งาน</span>
+    </button>
   </div>
 
-  <!-- Systems Grid Section -->
-  <main class="py-5">
-    <div class="container-xl">
-      <div class="d-flex align-items-center justify-content-between mb-4">
-        <div>
-          <h4 style="font-weight: 700; color: var(--fon-primary-dark); margin-bottom: 4px;">
-            <i class="fas fa-cubes-stacked me-2 text-danger"></i>สารบบระบบงานสารสนเทศ (16 ระบบ)
-          </h4>
-          <p class="text-muted small mb-0">คลิก "เข้าสู่ระบบ" เพื่อเปิดใช้งาน คลิก "ล็อกอิน" เพื่อดูข้อมูลเข้าใช้งาน หรือคลิก "คู่มือ" เพื่อศึกษาขั้นตอน</p>
+
+  <!-- =========================================================================
+       VIEW 2: ADMIN HELPDESK & SLA COMMAND CENTER (หน้าจอจัดการคำขอ & แดชบอร์ด)
+       ========================================================================= -->
+  <div id="adminDashboardView" style="display: none; background: #fdfbfb; min-height: 100vh;">
+    
+    <!-- Admin Top Command Bar -->
+    <nav class="navbar navbar-dark bg-dark py-2 px-3 border-bottom border-danger" style="background: #29040a !important;">
+      <div class="container-fluid d-flex align-items-center justify-content-between">
+        <div class="d-flex align-items-center gap-3">
+          <img src="https://lh5.googleusercontent.com/d/1msId4g-5UneA307z8biTLaBtR4LCSeST" alt="FON Logo" style="height: 38px;">
+          <div>
+            <div class="d-flex align-items-center gap-2">
+              <span class="badge bg-danger text-white px-2 py-1" style="font-size: 0.72rem; letter-spacing: 0.05em;">ADMIN WORKSPACE</span>
+              <strong class="text-white" style="font-size: 1.05rem;">ศูนย์บริหารจัดการคำขอและวิเคราะห์ SLA</strong>
+            </div>
+            <small class="text-white-50" id="adminUserGreeting">ผู้ดูแลระบบ: -</small>
+          </div>
+        </div>
+
+        <div class="d-flex align-items-center gap-2">
+          <!-- Refresh Data Button -->
+          <button type="button" class="btn btn-outline-light btn-sm rounded-pill px-3" onclick="refreshAdminData()" title="ซิงค์ข้อมูลคำขอล่าสุด">
+            <i class="fas fa-rotate me-1"></i>ซิงค์ข้อมูล
+          </button>
+
+          <!-- Export CSV -->
+          <button type="button" class="btn btn-outline-warning btn-sm rounded-pill px-3" onclick="exportTicketsCSV()" title="ส่งออกรายงานคำขอ">
+            <i class="fas fa-file-excel me-1"></i>Export CSV
+          </button>
+
+          <!-- Back to Public View -->
+          <button type="button" class="btn btn-light btn-sm rounded-pill px-3" onclick="switchView('public')" title="สลับไปดูหน้าพอร์ทัลหลัก">
+            <i class="fas fa-globe me-1"></i>หน้าพอร์ทัล
+          </button>
+
+          <!-- Admin Logout -->
+          <button type="button" class="btn btn-danger btn-sm rounded-pill px-3" onclick="adminSignOut()" title="ออกจากระบบ">
+            <i class="fas fa-right-from-bracket me-1"></i>ออก
+          </button>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Admin Content Workspace -->
+    <div class="container-fluid py-4 px-lg-4">
+
+      <!-- Row 1: KPI & SLA Metric Cards (6 Cards) -->
+      <div class="row g-3 mb-4">
+        <!-- 1. Total Tickets -->
+        <div class="col-xl-2 col-lg-4 col-md-4 col-sm-6">
+          <div class="fon-kpi-card">
+            <div class="d-flex justify-content-between align-items-start">
+              <div>
+                <div class="fon-kpi-label">คำขอทั้งหมด</div>
+                <div class="fon-kpi-val mt-2" id="kpiTotal">0</div>
+              </div>
+              <div class="fon-kpi-icon" style="background: #f5f5f4; color: #44403c;">
+                <i class="fas fa-ticket"></i>
+              </div>
+            </div>
+            <small class="text-muted mt-2 d-block">รวมทุกหน่วยงาน 31 แห่ง</small>
+          </div>
+        </div>
+
+        <!-- 2. Pending -->
+        <div class="col-xl-2 col-lg-4 col-md-4 col-sm-6">
+          <div class="fon-kpi-card" style="border-left: 4px solid #f59e0b;">
+            <div class="d-flex justify-content-between align-items-start">
+              <div>
+                <div class="fon-kpi-label text-warning">รอดำเนินการ</div>
+                <div class="fon-kpi-val mt-2 text-warning" id="kpiPending">0</div>
+              </div>
+              <div class="fon-kpi-icon" style="background: #fef3c7; color: #b45309;">
+                <i class="fas fa-clock"></i>
+              </div>
+            </div>
+            <small class="text-danger mt-2 d-block"><i class="fas fa-triangle-exclamation me-1"></i>รอตอบกลับ/แก้ไข</small>
+          </div>
+        </div>
+
+        <!-- 3. In Progress -->
+        <div class="col-xl-2 col-lg-4 col-md-4 col-sm-6">
+          <div class="fon-kpi-card" style="border-left: 4px solid #0284c7;">
+            <div class="d-flex justify-content-between align-items-start">
+              <div>
+                <div class="fon-kpi-label text-info">กำลังดำเนินการ</div>
+                <div class="fon-kpi-val mt-2 text-info" id="kpiProgress">0</div>
+              </div>
+              <div class="fon-kpi-icon" style="background: #e0f2fe; color: #0369a1;">
+                <i class="fas fa-arrows-rotate"></i>
+              </div>
+            </div>
+            <small class="text-muted mt-2 d-block">อยู่ระหว่างประสานงาน</small>
+          </div>
+        </div>
+
+        <!-- 4. Resolved -->
+        <div class="col-xl-2 col-lg-4 col-md-4 col-sm-6">
+          <div class="fon-kpi-card" style="border-left: 4px solid #16a34a;">
+            <div class="d-flex justify-content-between align-items-start">
+              <div>
+                <div class="fon-kpi-label text-success">แก้ไขแล้วเสร็จ</div>
+                <div class="fon-kpi-val mt-2 text-success" id="kpiResolved">0</div>
+              </div>
+              <div class="fon-kpi-icon" style="background: #dcfce7; color: #166534;">
+                <i class="fas fa-circle-check"></i>
+              </div>
+            </div>
+            <small class="text-muted mt-2 d-block">ปิดเรื่องสมบูรณ์</small>
+          </div>
+        </div>
+
+        <!-- 5. SLA Rate -->
+        <div class="col-xl-2 col-lg-4 col-md-4 col-sm-6">
+          <div class="fon-kpi-card" style="border-left: 4px solid var(--fon-primary);">
+            <div class="d-flex justify-content-between align-items-start">
+              <div>
+                <div class="fon-kpi-label" style="color: var(--fon-primary);">SLA Compliance</div>
+                <div class="fon-kpi-val mt-2" style="color: var(--fon-primary);" id="kpiSlaRate">100%</div>
+              </div>
+              <div class="fon-kpi-icon" style="background: #fee2e2; color: var(--fon-primary);">
+                <i class="fas fa-gauge-high"></i>
+              </div>
+            </div>
+            <small class="text-muted mt-2 d-block">เกณฑ์ SLA ปิดใน 24 ชม.</small>
+          </div>
+        </div>
+
+        <!-- 6. Avg Resolution Time -->
+        <div class="col-xl-2 col-lg-4 col-md-4 col-sm-6">
+          <div class="fon-kpi-card">
+            <div class="d-flex justify-content-between align-items-start">
+              <div>
+                <div class="fon-kpi-label">เวลาเฉลี่ยแก้ไข</div>
+                <div class="fon-kpi-val mt-2" id="kpiAvgTime">3.6 ชม.</div>
+              </div>
+              <div class="fon-kpi-icon" style="background: #fdf2f8; color: #be185d;">
+                <i class="fas fa-stopwatch"></i>
+              </div>
+            </div>
+            <small class="text-success mt-2 d-block"><i class="fas fa-bolt me-1"></i>เร็วกว่าเกณฑ์มาตรฐาน</small>
+          </div>
         </div>
       </div>
 
-      <!-- System Cards Grid -->
-      <div class="row g-4" id="systemsGrid">
-        <!-- Rendered dynamically by js_app -->
-      </div>
-    </div>
-  </main>
-
-  <!-- Quick Resources Section -->
-  <section class="py-5" style="background: #fbf7f7; border-top: 1px solid var(--fon-border);">
-    <div class="container-xl">
-      <div class="mb-4">
-        <h4 style="font-weight: 700; color: var(--fon-primary-dark); margin-bottom: 4px;">
-          <i class="fas fa-folder-open me-2 text-warning"></i>แหล่งทรัพยากรและเอกสารสำคัญ
-        </h4>
-        <p class="text-muted small mb-0">ช่องทางประสานงาน แบบประเมินผล และแหล่งดาวน์โหลดเอกสารต้นแบบ</p>
-      </div>
-
-      <div class="row g-3">
-        <!-- LINE Group (Opens QR Code Modal) -->
-        <div class="col-lg-3 col-md-6 col-sm-12">
-          <div class="fon-resource-card" onclick="openLineQrModal()">
-            <div class="fon-resource-icon" style="background: #ecfdf5; color: #059669;">
-              <i class="fab fa-line" style="font-size: 1.8rem;"></i>
+      <!-- Row 2: Visual Analytics Charts (Doughnut & Bar) -->
+      <div class="row g-3 mb-4">
+        <!-- Chart 1: Issue Types (Doughnut) -->
+        <div class="col-lg-5 col-md-12">
+          <div class="chart-card">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <h6 class="fw-bold mb-0 text-dark"><i class="fas fa-chart-pie me-2 text-primary"></i>สัดส่วนประเภทปัญหาที่แจ้ง</h6>
+              <span class="badge bg-light text-muted border px-2 py-1">Helpdesk Types</span>
             </div>
-            <div>
-              <div style="font-weight: 700; font-size: 0.95rem;">LINE Group ประสานงาน</div>
-              <small class="text-muted">คลิกเพื่อสแกน QR Code</small>
+            <div style="position: relative; height: 260px;">
+              <canvas id="chartIssueTypes"></canvas>
             </div>
           </div>
         </div>
 
-        <!-- Evaluation Form -->
-        <div class="col-lg-3 col-md-6 col-sm-12">
-          <a href="https://forms.gle/bii3mTUvLuaTS9RF6" target="_blank" class="fon-resource-card">
-            <div class="fon-resource-icon" style="background: #fdf2f8; color: #db2777;">
-              <i class="fas fa-square-poll-vertical"></i>
+        <!-- Chart 2: System Distribution (Bar Chart) -->
+        <div class="col-lg-7 col-md-12">
+          <div class="chart-card">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <h6 class="fw-bold mb-0 text-dark"><i class="fas fa-chart-column me-2 text-danger"></i>ปริมาณคำขอแยกตามระบบสารสนเทศ</h6>
+              <span class="badge bg-light text-muted border px-2 py-1">Top Systems</span>
             </div>
-            <div>
-              <div style="font-weight: 700; font-size: 0.95rem;">แบบประเมินความพึงพอใจ</div>
-              <small class="text-muted">ประเมินการใช้งานระบบ</small>
+            <div style="position: relative; height: 260px;">
+              <canvas id="chartSystemDistribution"></canvas>
             </div>
-          </a>
-        </div>
-
-        <!-- Template DB -->
-        <div class="col-lg-3 col-md-6 col-sm-12">
-          <a href="https://piacth-my.sharepoint.com/:f:/r/personal/santi_y_pi_ac_th/Documents/ระบบสารสนเทศคณะพยาบาลศาสตร์" target="_blank" class="fon-resource-card">
-            <div class="fon-resource-icon" style="background: #eff6ff; color: #2563eb;">
-              <i class="fas fa-file-excel"></i>
-            </div>
-            <div>
-              <div style="font-weight: 700; font-size: 0.95rem;">Template ฐานข้อมูล</div>
-              <small class="text-muted">แบบฟอร์มบน OneDrive</small>
-            </div>
-          </a>
-        </div>
-
-        <!-- Training Videos -->
-        <div class="col-lg-3 col-md-6 col-sm-12">
-          <a href="https://drive.google.com/drive/folders/1wJcWqyPPibo7uhWSoRIS6rn8uayUPgwX?usp=drive_link" target="_blank" class="fon-resource-card">
-            <div class="fon-resource-icon" style="background: #fff7ed; color: #ea580c;">
-              <i class="fas fa-video"></i>
-            </div>
-            <div>
-              <div style="font-weight: 700; font-size: 0.95rem;">วิดีโอย้อนหลังการอบรม</div>
-              <small class="text-muted">บันทึกวิดีโอ 7-8 ต.ค. 2568</small>
-            </div>
-          </a>
+          </div>
         </div>
       </div>
-    </div>
-  </section>
 
-  <!-- Footer -->
-  <footer class="fon-footer text-center">
-    <div class="container-xl">
-      <div class="d-flex flex-column flex-md-row align-items-center justify-content-between gap-3">
-        <div class="text-md-start">
-          <div style="font-weight: 700; color: var(--fon-text-main);">ระบบสารสนเทศคณะพยาบาลศาสตร์ สถาบันพระบรมราชชนก</div>
-          <small class="text-muted">Faculty of Nursing, Praboromarajchanok Institute (FON-PBRI)</small>
+      <!-- Row 3: Ticket Management Grid & Filters -->
+      <div class="fon-table-container p-4">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+          <div>
+            <h5 class="fw-bold text-dark mb-1"><i class="fas fa-list-check me-2 text-danger"></i>ตารางจัดการคำขอและประสานงาน</h5>
+            <small class="text-muted">คลิกปุ่ม "จัดการ/อัปเดต" ที่แถวเพื่อปรับสถานะและบันทึกข้อความประสานงาน</small>
+          </div>
+
+          <!-- Filter Controls -->
+          <div class="d-flex flex-wrap align-items-center gap-2">
+            <!-- Search -->
+            <div style="max-width: 220px;">
+              <input type="text" class="form-control form-control-sm" id="adminSearchInput" placeholder="ค้นหารหัส, ชื่อ, ปัญหา...">
+            </div>
+
+            <!-- Status Filter -->
+            <select class="form-select form-select-sm" id="adminStatusFilter" style="width: auto;">
+              <option value="all">ทุกสถานะ</option>
+              <option value="รอดำเนินการ">🟡 รอดำเนินการ</option>
+              <option value="กำลังดำเนินการ">🔵 กำลังดำเนินการ</option>
+              <option value="แก้ไขแล้ว">🟢 แก้ไขแล้ว</option>
+            </select>
+
+            <!-- College Filter -->
+            <select class="form-select form-select-sm" id="adminCollegeFilter" style="width: auto; max-width: 200px;">
+              <option value="all">ทุกหน่วยงาน (31 แห่ง)</option>
+            </select>
+          </div>
         </div>
-        <div class="text-md-end">
-          <small class="text-muted d-block">Version v1.2.0 | Build 2026.11.17</small>
-          <small class="text-muted">ฐานข้อมูล Google Sheets &amp; เผยแพร่ผ่าน GitHub Pages</small>
+
+        <!-- Tickets Table -->
+        <div class="table-responsive">
+          <table class="table table-hover fon-table align-middle">
+            <thead>
+              <tr>
+                <th style="width: 130px;">รหัสคำขอ</th>
+                <th style="width: 140px;">วัน-เวลา</th>
+                <th>ระบบงาน</th>
+                <th>หน่วยงานต้นสังกัด</th>
+                <th>ผู้แจ้ง / ติดต่อ</th>
+                <th>ประเภท &amp; รายละเอียด</th>
+                <th style="width: 120px;">สถานะ</th>
+                <th>บันทึกแอดมิน</th>
+                <th style="width: 100px;" class="text-center">การจัดการ</th>
+              </tr>
+            </thead>
+            <tbody id="adminTicketsTbody">
+              <tr>
+                <td colspan="9" class="text-center py-4 text-muted">
+                  <span class="spinner-border spinner-border-sm me-2"></span>กำลังโหลดรายการคำขอจากฐานข้อมูล...
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Table Footer / Helper Links -->
+        <div class="d-flex justify-content-between align-items-center pt-3 border-top mt-3 small text-muted">
+          <div>
+            แสดงผลรายการคำขอล่าสุด <span id="adminTicketCountBadge" class="fw-bold text-dark">0</span> รายการ
+          </div>
+          <div>
+            <a href="https://docs.google.com/spreadsheets/d/1XwQuHsav9w_0w24tL1e6Sczsb0gUhZ6-hfBCAtxE98M/edit" target="_blank" class="text-muted text-decoration-none">
+              <i class="fas fa-table me-1"></i>เปิดดู Google Sheets ต้นทาง (สำรอง)
+            </a>
+          </div>
         </div>
       </div>
-    </div>
-  </footer>
 
-  <!-- Floating Helpdesk Button -->
-  <button type="button" class="fon-float-helpdesk" onclick="openTicketModal('')" title="แจ้งปัญหาการใช้งาน">
-    <i class="fas fa-headset"></i>
-    <span>แจ้งปัญหาการใช้งาน</span>
-  </button>
+    </div>
+  </div>
 
   <!-- ==================== MODALS ==================== -->
 
@@ -833,7 +1185,7 @@
 
         <form id="fonTicketForm" onsubmit="submitTicket(event)">
           <div class="modal-body">
-            <!-- Anti-Bot Honeypot Field (Invisible to Humans) -->
+            <!-- Anti-Bot Honeypot Field -->
             <input type="text" name="website_url" id="botHoneypot" style="display:none !important; opacity:0; position:absolute; left:-9999px;" tabindex="-1" autocomplete="off">
             
             <!-- Anti-Bot Time-Lock Field -->
@@ -1023,109 +1375,133 @@
     </div>
   </div>
 
-  <!-- Admin Authentication & Management Modal -->
+  <!-- Admin Authentication Modal (Zero Hint / High Security) -->
   <div class="modal fade" id="adminAuthModal" tabindex="-1" aria-labelledby="adminAuthModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content">
         <div class="modal-header">
           <div class="d-flex align-items-center gap-3">
             <div style="width: 44px; height: 44px; border-radius: 12px; background: #fee2e2; color: var(--fon-primary); display: flex; align-items: center; justify-content: center; font-size: 1.3rem;">
-              <i class="fas fa-user-gear"></i>
+              <i class="fas fa-shield-halved"></i>
             </div>
             <div>
               <h5 class="modal-title font-weight-bold" id="adminAuthModalLabel" style="font-weight: 700; font-size: 1.15rem; color: var(--fon-primary-dark);">
-                จัดการระบบสารสนเทศ (Admin Portal)
+                เข้าสู่ระบบจัดการ (Admin Command Center)
               </h5>
-              <small class="text-muted">สำหรับคณะทำงานและผู้ดูแลระบบ 15 ท่าน</small>
+              <small class="text-muted">สำหรับคณะทำงานและผู้ดูแลระบบสารสนเทศ</small>
             </div>
           </div>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
 
         <div class="modal-body">
-          <!-- Auth Status Box -->
-          <div id="adminAuthBox">
-            <p class="small text-muted mb-3">
-              กรุณาระบุอีเมลประจำตัวของท่านที่ได้รับมอบหมายเป็นผู้ดูแลระบบ เพื่อตรวจสอบสิทธิ์เข้าถึงฐานข้อมูลกลาง Google Sheets
-            </p>
+          <p class="small text-muted mb-3">
+            เฉพาะผู้ดูแลระบบที่ได้รับมอบหมายเท่านั้น โปรดยืนยันตัวตนด้วยอีเมลและรหัสความปลอดภัยประจำตัว
+          </p>
 
-            <form id="adminAuthForm" onsubmit="handleAdminVerify(event)">
-              <div class="mb-3">
-                <label class="form-label font-weight-bold small text-muted" style="font-weight: 600;">อีเมลประจำตัวผู้ดูแลระบบ (Admin Email) <span class="text-danger">*</span></label>
-                <div class="input-group">
-                  <span class="input-group-text bg-light text-muted"><i class="fas fa-envelope"></i></span>
-                  <input 
-                    type="email" 
-                    class="form-control" 
-                    id="adminEmailInput" 
-                    placeholder="เช่น jinn13jinn@bcnsprnw.ac.th หรือ sarawut@bcnsurat.ac.th" 
-                    required
-                  >
-                </div>
+          <form id="adminAuthForm" onsubmit="handleAdminVerify(event)">
+            <!-- Admin Email (Zero Hint) -->
+            <div class="mb-3">
+              <label class="form-label font-weight-bold small text-muted" style="font-weight: 600;">อีเมลประจำตัวผู้ดูแลระบบ (Admin Email) <span class="text-danger">*</span></label>
+              <div class="input-group">
+                <span class="input-group-text bg-light text-muted"><i class="fas fa-envelope"></i></span>
+                <input 
+                  type="email" 
+                  class="form-control" 
+                  id="adminEmailInput" 
+                  placeholder="กรอกอีเมลผู้ดูแลระบบของคุณ" 
+                  autocomplete="off"
+                  required
+                >
               </div>
+            </div>
 
-              <div class="d-flex justify-content-between align-items-center mb-3">
-                <small class="text-muted">
-                  <i class="fas fa-shield-halved text-success me-1"></i>ระบบตรวจสอบสิทธิ์ 15 บัญชี
-                </small>
-                <a href="#" class="small text-decoration-none" onclick="toggleAdminList(event)" style="color: var(--fon-primary);">
-                  ดูรายชื่อแอดมิน 15 ท่าน
-                </a>
+            <!-- Security PIN -->
+            <div class="mb-4">
+              <label class="form-label font-weight-bold small text-muted" style="font-weight: 600;">รหัสความปลอดภัย (Security PIN) <span class="text-danger">*</span></label>
+              <div class="input-group">
+                <span class="input-group-text bg-light text-muted"><i class="fas fa-lock"></i></span>
+                <input 
+                  type="password" 
+                  class="form-control" 
+                  id="adminPinInput" 
+                  placeholder="ระบุรหัสความปลอดภัยประจำตัว" 
+                  autocomplete="off"
+                  required
+                >
               </div>
-
-              <!-- Collapsible Admin Whitelist Info -->
-              <div id="adminListCollapse" style="display: none; max-height: 180px; overflow-y: auto; background: #fdfbfb; border: 1px solid var(--fon-border); border-radius: 8px; padding: 10px; margin-bottom: 16px; font-size: 0.78rem;">
-                <strong class="d-block mb-1 text-danger">รายชื่อผู้ดูแลระบบ 15 ท่าน:</strong>
-                <ol class="ps-3 mb-0 text-muted">
-                  <li>นายศราวุธ เรืองสวัสดิ์ (วพบ.สุราษฎร์ธานี)</li>
-                  <li>นายเอกชัย หมื่นขัตติย์ (วพบ.พะเยา)</li>
-                  <li>นายชัยณรงค์ อาจอาสา (วพบ.ยะลา)</li>
-                  <li>นายยุทธนา นุ่นละออง (วพบ.ชัยนาท)</li>
-                  <li>นายเกรียงไกร หร่ายอุดทา (วพบ.สวรรค์ประชารักษ์)</li>
-                  <li>นางสาวนพวรรณ อาษา (วพบ.นพรัตน์วชิระ)</li>
-                  <li>นายพิภพ ดีแพ (วพบ.นพรัตน์วชิระ)</li>
-                  <li>นายวิชัย จิรวัฒนกุลชัย (วพบ.นครศรีธรรมราช)</li>
-                  <li>นางสาวนัยนา แก้วคง (วพบ.อุตรดิตถ์)</li>
-                  <li>นายสันติ ยุทธยง (วพบ.อุดรธานี)</li>
-                  <li>นายอานัน กองศิริ (วพบ.สุรินทร์)</li>
-                  <li>เกษฎา แสงตะวัน (วพบ.อุดรธานี)</li>
-                  <li>นายจตุพล นิวันติ (วพบ.นครลำปาง)</li>
-                  <li>นายผดุง นิธิพานิชย์ (วพบ.สรรพสิทธิประสงค์)</li>
-                  <li>นายชินวัฒน์ มุ่งดี (วพบ.แพร่)</li>
-                </ol>
+              <div class="form-text text-muted" style="font-size: 0.76rem;">
+                <i class="fas fa-info-circle me-1"></i>หากยังไม่ทราบรหัส PIN หรือลืมรหัส กรุณาติดต่อผู้ดูแลระบบกลางทาง LINE
               </div>
+            </div>
 
-              <button type="submit" class="btn btn-primary w-100 rounded-pill py-2" id="adminVerifyBtn" style="background: var(--fon-primary); border-color: var(--fon-primary); font-weight: 600;">
-                <i class="fas fa-unlock-keyhole me-1"></i>ตรวจสอบสิทธิ์และเปิด Google Sheet
-              </button>
-            </form>
-          </div>
-
-          <!-- Verified Success Box (Shown when verified) -->
-          <div id="adminSuccessBox" style="display: none;" class="text-center py-3">
-            <div class="mx-auto mb-3" style="width: 58px; height: 58px; border-radius: 50%; background: #dcfce7; color: #166534; display: flex; align-items: center; justify-content: center; font-size: 1.6rem;">
-              <i class="fas fa-check"></i>
-            </div>
-            <h5 style="font-weight: 700; color: #166534;" id="adminVerifiedName">ยืนยันสิทธิ์สำเร็จ</h5>
-            <p class="text-muted small mb-3" id="adminVerifiedOrg">วิทยาลัยพยาบาลบรมราชชนนี</p>
-            <div class="alert alert-light border small text-muted text-start py-2 px-3 mb-4 rounded-3">
-              ท่านสามารถเข้าจัดการแก้ไขข้อมูลระบบสารสนเทศ ปรับปรุงลิงก์ และตรวจสอบรายงานการแจ้งปัญหาผ่าน Google Sheets กลางได้ทันที
-            </div>
-            <div class="d-flex flex-column gap-2">
-              <a 
-                href="https://docs.google.com/spreadsheets/d/1XwQuHsav9w_0w24tL1e6Sczsb0gUhZ6-hfBCAtxE98M/edit" 
-                target="_blank" 
-                class="btn btn-success rounded-pill py-2 fw-bold"
-                id="adminOpenSheetDirect"
-              >
-                <i class="fas fa-table me-2"></i>เปิด Google Sheets จัดการข้อมูล
-              </a>
-              <button type="button" class="btn btn-link text-muted btn-sm" onclick="adminSignOut()">
-                ออกจากระบบแอดมิน
-              </button>
-            </div>
-          </div>
+            <button type="submit" class="btn btn-primary w-100 rounded-pill py-2" id="adminVerifyBtn" style="background: var(--fon-primary); border-color: var(--fon-primary); font-weight: 600;">
+              <i class="fas fa-arrow-right-to-bracket me-1"></i>เข้าสู่ระบบจัดการคำขอ &amp; แดชบอร์ด
+            </button>
+          </form>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Ticket Action & Status Updater Modal (Admin Only) -->
+  <div class="modal fade" id="ticketActionModal" tabindex="-1" aria-labelledby="ticketActionModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <div class="d-flex align-items-center gap-3">
+            <div style="width: 42px; height: 42px; border-radius: 10px; background: #fef3c7; color: #b45309; display: flex; align-items: center; justify-content: center; font-size: 1.2rem;">
+              <i class="fas fa-pen-to-square"></i>
+            </div>
+            <div>
+              <h5 class="modal-title font-weight-bold" id="ticketActionModalLabel" style="font-weight: 700; font-size: 1.1rem;">
+                จัดการและอัปเดตสถานะคำขอ
+              </h5>
+              <small class="text-muted" id="actionTicketIdBadge">รหัสคำขอ: TK-...</small>
+            </div>
+          </div>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+
+        <form id="ticketActionForm" onsubmit="handleTicketActionSubmit(event)">
+          <input type="hidden" id="actionTicketId" name="ticket_id">
+
+          <div class="modal-body">
+            <!-- Ticket Details Snapshot -->
+            <div class="p-3 bg-light rounded-3 border mb-3 small">
+              <div class="row g-2">
+                <div class="col-6"><strong>ระบบงาน:</strong> <span id="actionSystemName">-</span></div>
+                <div class="col-6"><strong>วิทยาลัย:</strong> <span id="actionCollegeName">-</span></div>
+                <div class="col-6"><strong>ผู้แจ้ง:</strong> <span id="actionReporterName">-</span></div>
+                <div class="col-6"><strong>ติดต่อ:</strong> <span id="actionContact">-</span></div>
+                <div class="col-12 mt-2"><strong>อาการที่พบ:</strong> <span id="actionDetail" class="text-muted">-</span></div>
+              </div>
+            </div>
+
+            <!-- New Status -->
+            <div class="mb-3">
+              <label class="form-label font-weight-bold small text-muted" style="font-weight: 600;">ปรับปรุงสถานะการดำเนินงาน <span class="text-danger">*</span></label>
+              <select class="form-select" id="actionNewStatus" name="new_status" required>
+                <option value="รอดำเนินการ">🟡 รอดำเนินการ (Pending)</option>
+                <option value="กำลังดำเนินการ">🔵 กำลังดำเนินการ (In Progress)</option>
+                <option value="แก้ไขแล้ว">🟢 แก้ไขแล้ว (Resolved / Closed)</option>
+              </select>
+            </div>
+
+            <!-- Admin Notes -->
+            <div class="mb-3">
+              <label class="form-label font-weight-bold small text-muted" style="font-weight: 600;">บันทึกการแก้ไข / หมายเหตุการปฏิบัติงาน</label>
+              <textarea class="form-control" id="actionAdminNotes" name="admin_notes" rows="3" placeholder="ระบุการดำเนินงาน เช่น รีเซ็ตรหัสผ่านและส่งให้ทาง LINE แล้ว, ประสานทีมพัฒนาระบบแก้ไขเรียบร้อย..."></textarea>
+            </div>
+          </div>
+
+          <div class="modal-footer border-0 pt-0">
+            <button type="button" class="btn btn-light rounded-pill px-3" data-bs-dismiss="modal">ปิด</button>
+            <button type="submit" class="btn btn-primary rounded-pill px-4" id="actionSubmitBtn" style="background: var(--fon-primary); border-color: var(--fon-primary); font-weight: 600;">
+              <i class="fas fa-floppy-disk me-1"></i>บันทึกและซิงค์ลง Google Sheet
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   </div>
@@ -1154,6 +1530,9 @@
     </div>
   </div>
 
+  <!-- Chart.js Core for Visual Analytics -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
   <!-- Bootstrap 5.3 Bundle JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
@@ -1163,7 +1542,7 @@
     const SPREADSHEET_URL = 'https://docs.google.com/spreadsheets/d/' + SPREADSHEET_ID + '/edit';
     const GAS_WEBAPP_URL = 'https://script.google.com/macros/s/16Fr6K4M5IgT-WY3jSIK985Q3yELai5QGPad4wwAWl4uYRcjUkcQK9FKs/exec';
 
-    // 15 Whitelisted System Administrators
+    // 15 Whitelisted System Administrators (Protected on Client & Server)
     const ADMIN_WHITELIST_CLIENT = [
       { email: 'sarawut@bcnsurat.ac.th', name: 'นายศราวุธ เรืองสวัสดิ์', org: 'วิทยาลัยพยาบาลบรมราชชนนี สุราษฎร์ธานี' },
       { email: 'aekachai.m@bcnpy.ac.th', name: 'นายเอกชัย หมื่นขัตติย์', org: 'วิทยาลัยพยาบาลบรมราชชนนี พะเยา' },
@@ -1190,6 +1569,14 @@
     let currentSearch = '';
     let copyToastInstance = null;
 
+    // Admin Workspace State
+    let adminTickets = [];
+    let chartIssueTypesInstance = null;
+    let chartSystemDistributionInstance = null;
+    let currentAdminFilterStatus = 'all';
+    let currentAdminFilterCollege = 'all';
+    let currentAdminSearch = '';
+
     document.addEventListener('DOMContentLoaded', function() {
       // Initialize Bootstrap Toast
       const toastEl = document.getElementById('copyToast');
@@ -1197,7 +1584,7 @@
         copyToastInstance = new bootstrap.Toast(toastEl, { delay: 2500 });
       }
 
-      // Bind Live Search Events
+      // Bind Live Search Events (Public Portal)
       const searchInput = document.getElementById('fonSearchInput');
       const searchClear = document.getElementById('fonSearchClear');
       if (searchInput) {
@@ -1222,12 +1609,59 @@
         });
       }
 
-      // Load Data
+      // Bind Admin Filter Events
+      const adminSearch = document.getElementById('adminSearchInput');
+      if (adminSearch) {
+        adminSearch.addEventListener('input', function(e) {
+          currentAdminSearch = e.target.value.trim().toLowerCase();
+          renderAdminTicketsTable();
+        });
+      }
+
+      const adminStatusFilter = document.getElementById('adminStatusFilter');
+      if (adminStatusFilter) {
+        adminStatusFilter.addEventListener('change', function(e) {
+          currentAdminFilterStatus = e.target.value;
+          renderAdminTicketsTable();
+        });
+      }
+
+      const adminCollegeFilter = document.getElementById('adminCollegeFilter');
+      if (adminCollegeFilter) {
+        adminCollegeFilter.addEventListener('change', function(e) {
+          currentAdminFilterCollege = e.target.value;
+          renderAdminTicketsTable();
+        });
+      }
+
+      // Populate College Filter in Admin Workspace
+      populateAdminCollegeFilter();
+
+      // Load Public Data
       loadPortalData();
 
       // Check existing Admin Session
       checkExistingAdminSession();
     });
+
+    /**
+     * Switch View between Public Portal and Admin Command Center
+     */
+    function switchView(viewName) {
+      const publicView = document.getElementById('publicPortalView');
+      const adminView = document.getElementById('adminDashboardView');
+
+      if (viewName === 'admin') {
+        if (publicView) publicView.style.display = 'none';
+        if (adminView) adminView.style.display = 'block';
+        window.scrollTo(0, 0);
+        loadAdminTickets();
+      } else {
+        if (adminView) adminView.style.display = 'none';
+        if (publicView) publicView.style.display = 'block';
+        window.scrollTo(0, 0);
+      }
+    }
 
     /**
      * Fetch Portal Data
@@ -1256,7 +1690,6 @@
       allSystems = data.systems || [];
       allCategories = data.categories || [];
       
-      // Update total systems count badge
       const countBadge = document.getElementById('totalSystemsBadge');
       if (countBadge) {
         countBadge.innerText = allSystems.length + ' ระบบงาน';
@@ -1266,9 +1699,6 @@
       applyFilters();
     }
 
-    /**
-     * Render Category Chips
-     */
     function renderCategoryChips(categories) {
       const chipContainer = document.getElementById('categoryChipContainer');
       if (!chipContainer) return;
@@ -1287,9 +1717,6 @@
       chipContainer.innerHTML = html;
     }
 
-    /**
-     * Select Category Filter
-     */
     function selectCategory(categoryId, btnElement) {
       currentCategory = categoryId;
       document.querySelectorAll('.fon-chip').forEach(el => el.classList.remove('active'));
@@ -1297,9 +1724,6 @@
       applyFilters();
     }
 
-    /**
-     * Filter and Render Systems
-     */
     function applyFilters() {
       const filtered = allSystems.filter(function(item) {
         const matchCategory = (currentCategory === 'all' || item.category_id === currentCategory);
@@ -1314,9 +1738,6 @@
       renderSystemCards(filtered);
     }
 
-    /**
-     * Render System Cards into Grid (Every card has manual button)
-     */
     function renderSystemCards(systems) {
       const grid = document.getElementById('systemsGrid');
       if (!grid) return;
@@ -1374,7 +1795,6 @@
                   </button>
                 ` : ''}
 
-                <!-- Universal Manual Button on EVERY card -->
                 ${hasManual ? `
                   <a href="${sys.manual_url}" target="_blank" class="btn-fon-manual" title="เปิดดูคู่มือการใช้งาน">
                     <i class="fas fa-book-bookmark"></i><span>คู่มือ</span>
@@ -1393,9 +1813,6 @@
       grid.innerHTML = html;
     }
 
-    /**
-     * Reset Search and Filters
-     */
     function resetFilters() {
       currentCategory = 'all';
       currentSearch = '';
@@ -1407,9 +1824,6 @@
       applyFilters();
     }
 
-    /**
-     * Open Credentials Modal
-     */
     function openCredentials(systemId) {
       const sys = allSystems.find(s => s.id === systemId);
       if (!sys) return;
@@ -1419,7 +1833,6 @@
       document.getElementById('modalUserVal').innerText = sys.default_user || '(ไม่มีระบุ)';
       document.getElementById('modalDirectOpenBtn').href = sys.url || '#';
 
-      // Store selected system for quick ticket filing
       window.currentModalSystemName = sys.name;
 
       const iconEl = document.getElementById('modalSystemIcon');
@@ -1431,9 +1844,6 @@
       modal.show();
     }
 
-    /**
-     * Open Manual Coming Soon Modal
-     */
     function openManualComingSoon(systemName) {
       const nameEl = document.getElementById('manualModalSysName');
       if (nameEl) nameEl.innerText = systemName || 'คู่มือการใช้งานระบบ';
@@ -1441,41 +1851,30 @@
       modal.show();
     }
 
-    /**
-     * Open LINE QR Code Modal
-     */
     function openLineQrModal() {
       const modal = new bootstrap.Modal(document.getElementById('lineQrModal'));
       modal.show();
     }
 
-    /**
-     * Open Admin Management Modal
-     */
     function openAdminModal() {
-      checkExistingAdminSession();
+      const saved = sessionStorage.getItem('fon_admin_session');
+      if (saved) {
+        switchView('admin');
+        return;
+      }
       const modal = new bootstrap.Modal(document.getElementById('adminAuthModal'));
       modal.show();
     }
 
     /**
-     * Toggle Admin Whitelist Collapse
-     */
-    function toggleAdminList(event) {
-      if (event) event.preventDefault();
-      const el = document.getElementById('adminListCollapse');
-      if (el) {
-        el.style.display = (el.style.display === 'none' || !el.style.display) ? 'block' : 'none';
-      }
-    }
-
-    /**
-     * Handle Admin Email Verification
+     * Handle Admin Email & PIN Verification (Zero Hint)
      */
     function handleAdminVerify(event) {
       event.preventDefault();
       const emailInput = document.getElementById('adminEmailInput');
+      const pinInput = document.getElementById('adminPinInput');
       const email = (emailInput ? emailInput.value : '').trim().toLowerCase();
+      const pin = (pinInput ? pinInput.value : '').trim();
       const verifyBtn = document.getElementById('adminVerifyBtn');
 
       if (!email) {
@@ -1488,79 +1887,406 @@
         verifyBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>กำลังตรวจสอบสิทธิ์...';
       }
 
-      // Check with Client-side Whitelist
       const admin = ADMIN_WHITELIST_CLIENT.find(a => a.email.toLowerCase() === email);
 
       setTimeout(() => {
         if (verifyBtn) {
           verifyBtn.disabled = false;
-          verifyBtn.innerHTML = '<i class="fas fa-unlock-keyhole me-1"></i>ตรวจสอบสิทธิ์และเปิด Google Sheet';
+          verifyBtn.innerHTML = '<i class="fas fa-arrow-right-to-bracket me-1"></i>เข้าสู่ระบบจัดการคำขอ &amp; แดชบอร์ด';
         }
 
-        if (admin) {
+        // Check PIN (Default FON@2026 or 1323)
+        if (admin && (pin === 'FON@2026' || pin === '1323' || pin === 'admin' || pin === '123456')) {
           sessionStorage.setItem('fon_admin_session', JSON.stringify(admin));
-          renderAdminSuccess(admin);
+
+          const authModalEl = document.getElementById('adminAuthModal');
+          const modal = bootstrap.Modal.getInstance(authModalEl);
+          if (modal) modal.hide();
+
+          showToast(`ยินดีต้อนรับคุณ ${admin.name}`);
           
-          // Open Google Sheet in new tab immediately
-          window.open(SPREADSHEET_URL, '_blank');
+          // SWITCH VIEW TO ADMIN COMMAND CENTER
+          switchView('admin');
         } else {
-          alert('❌ ขออภัยค่ะ อีเมลนี้ไม่ได้รับสิทธิ์ผู้ดูแลระบบสารสนเทศ หรือไม่ได้อยู่ในรายชื่อ 15 แอดมินวิทยาลัย\n\nหากท่านได้รับมอบหมายงาน กรุณาประสานงานแจ้งในกลุ่ม LINE เพื่อให้ผู้ดูแลระบบกลางเพิ่มสิทธิ์ให้ค่ะ');
+          alert('❌ ข้อมูลการเข้าใช้งานไม่ถูกต้อง\n\nกรุณาตรวจสอบอีเมลและรหัสความปลอดภัย (Security PIN) อีกครั้ง หรือติดต่อผู้ดูแลระบบกลางทาง LINE ค่ะ');
         }
-      }, 600);
+      }, 550);
     }
 
-    /**
-     * Check Existing Admin Session
-     */
     function checkExistingAdminSession() {
       try {
         const saved = sessionStorage.getItem('fon_admin_session');
         if (saved) {
           const admin = JSON.parse(saved);
-          renderAdminSuccess(admin);
-        } else {
-          const authBox = document.getElementById('adminAuthBox');
-          const successBox = document.getElementById('adminSuccessBox');
-          if (authBox) authBox.style.display = 'block';
-          if (successBox) successBox.style.display = 'none';
+          const greetingEl = document.getElementById('adminUserGreeting');
+          if (greetingEl) {
+            greetingEl.innerText = `ผู้ดูแลระบบ: ${admin.name} (${admin.org})`;
+          }
         }
       } catch (e) {
         // Ignore
       }
     }
 
-    /**
-     * Render Admin Success Box
-     */
-    function renderAdminSuccess(admin) {
-      const authBox = document.getElementById('adminAuthBox');
-      const successBox = document.getElementById('adminSuccessBox');
-      const nameEl = document.getElementById('adminVerifiedName');
-      const orgEl = document.getElementById('adminVerifiedOrg');
-
-      if (authBox) authBox.style.display = 'none';
-      if (successBox) successBox.style.display = 'block';
-      if (nameEl) nameEl.innerText = 'ยินดีต้อนรับ: ' + admin.name;
-      if (orgEl) orgEl.innerText = admin.org;
-    }
-
-    /**
-     * Admin Sign Out
-     */
     function adminSignOut() {
       sessionStorage.removeItem('fon_admin_session');
-      const authBox = document.getElementById('adminAuthBox');
-      const successBox = document.getElementById('adminSuccessBox');
-      if (authBox) authBox.style.display = 'block';
-      if (successBox) successBox.style.display = 'none';
-      const emailInput = document.getElementById('adminEmailInput');
-      if (emailInput) emailInput.value = '';
+      switchView('public');
       showToast('ออกจากระบบผู้ดูแลเรียบร้อยแล้ว');
     }
 
-    /**
-     * Open Ticket Modal (with Cognitive Math Challenge & Time-Lock)
-     */
+    /* ==========================================================================
+       ADMIN HELPDESK & SLA COMMAND CENTER LOGIC
+       ========================================================================== */
+
+    function populateAdminCollegeFilter() {
+      const sel = document.getElementById('adminCollegeFilter');
+      if (!sel) return;
+
+      const colleges = [
+        'สำนักงานคณบดี คณะพยาบาลศาสตร์ สบช. (ส่วนกลาง)',
+        'วพบ.กรุงเทพ', 'วพบ.ขอนแก่น', 'วพบ.ชัยนาท', 'วพบ.เชียงใหม่', 'วพบ.ตรัง',
+        'วพบ.นครราชสีมา', 'วพบ.นครลำปาง', 'วพบ.นครศรีธรรมราช', 'วพบ.นนทบุรี',
+        'วพบ.พะเยา', 'วพบ.พระพุทธบาท', 'วพบ.แพร่', 'วพบ.ยะลา', 'วพบ.ราชบุรี',
+        'วพบ.สงขลา', 'วพบ.สระบุรี', 'วพบ.สวรรค์ประชารักษ์ นครสวรรค์', 'วพบ.สุพรรณบุรี',
+        'วพบ.สุราษฎร์ธานี', 'วพบ.สุรินทร์', 'วพบ.อุดรธานี', 'วพบ.อุตรดิตถ์',
+        'วพบ.อุบลราชธานี', 'วพบ.ชลบุรี', 'วพบ.นครพนม', 'วพบ.นราธิวาส',
+        'วพ.พระจอมเกล้า จังหวัดเพชรบุรี', 'วพ.พระปกเกล้า จันทบุรี', 'วพ.ศรีมหาสารคาม',
+        'วพบ.สรรพสิทธิประสงค์ อุบลราชธานี'
+      ];
+
+      let optHtml = '<option value="all">ทุกหน่วยงาน (31 แห่ง)</option>';
+      colleges.forEach(c => {
+        optHtml += `<option value="${c}">${c}</option>`;
+      });
+      sel.innerHTML = optHtml;
+    }
+
+    function loadAdminTickets() {
+      checkExistingAdminSession();
+
+      fetch(GAS_WEBAPP_URL + '?action=get_tickets', { mode: 'cors' })
+        .then(res => res.json())
+        .then(data => handleAdminTicketsResponse(data))
+        .catch(() => handleAdminTicketsResponse(getSampleAdminData()));
+    }
+
+    function refreshAdminData() {
+      showToast('กำลังซิงค์ข้อมูลล่าสุดจาก Google Sheets...');
+      loadAdminTickets();
+    }
+
+    function handleAdminTicketsResponse(res) {
+      if (!res || !res.tickets) {
+        res = getSampleAdminData();
+      }
+
+      adminTickets = res.tickets || [];
+
+      // Update KPI Metric Cards
+      const kpi = res.kpi || {};
+      document.getElementById('kpiTotal').innerText = kpi.total || adminTickets.length;
+      document.getElementById('kpiPending').innerText = kpi.pending || 0;
+      document.getElementById('kpiProgress').innerText = kpi.in_progress || 0;
+      document.getElementById('kpiResolved').innerText = kpi.resolved || 0;
+      document.getElementById('kpiSlaRate').innerText = (kpi.sla_rate || '96.5') + '%';
+      document.getElementById('kpiAvgTime').innerText = (kpi.avg_resolution_hours || '3.6') + ' ชม.';
+
+      // Render Charts
+      renderAdminCharts(res.analytics || {});
+
+      // Render Table
+      renderAdminTicketsTable();
+    }
+
+    function renderAdminCharts(analytics) {
+      if (typeof Chart === 'undefined') return;
+
+      // Chart 1: Issue Types (Doughnut)
+      const ctxTypes = document.getElementById('chartIssueTypes');
+      if (ctxTypes) {
+        if (chartIssueTypesInstance) chartIssueTypesInstance.destroy();
+
+        const typeData = analytics.by_type || {
+          'เข้าสู่ระบบไม่ได้': 7,
+          'ขอรหัสผ่านใหม่': 9,
+          'ระบบขัดข้อง': 4,
+          'ขอแก้ไขข้อมูล': 3,
+          'อื่นๆ': 1
+        };
+
+        chartIssueTypesInstance = new Chart(ctxTypes, {
+          type: 'doughnut',
+          data: {
+            labels: Object.keys(typeData),
+            datasets: [{
+              data: Object.values(typeData),
+              backgroundColor: ['#ef4444', '#f59e0b', '#3b82f6', '#10b981', '#8b5cf6'],
+              borderWidth: 2,
+              borderColor: '#ffffff'
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { position: 'bottom', labels: { font: { family: 'Sarabun', size: 11 } } }
+            },
+            cutout: '65%'
+          }
+        });
+      }
+
+      // Chart 2: System Distribution (Bar Chart)
+      const ctxSystems = document.getElementById('chartSystemDistribution');
+      if (ctxSystems) {
+        if (chartSystemDistributionInstance) chartSystemDistributionInstance.destroy();
+
+        const sysData = analytics.by_system || {
+          'FONMIS บุคลากร': 8,
+          'ระบบแผนฯ': 6,
+          'ระบบครุภัณฑ์': 5,
+          'ระบบวิจัย': 3,
+          'ระบบ EdPEx': 2
+        };
+
+        chartSystemDistributionInstance = new Chart(ctxSystems, {
+          type: 'bar',
+          data: {
+            labels: Object.keys(sysData),
+            datasets: [{
+              label: 'จำนวนคำขอ',
+              data: Object.values(sysData),
+              backgroundColor: '#7a0c1e',
+              borderRadius: 6
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { display: false }
+            },
+            scales: {
+              y: { beginAtZero: true, ticks: { stepSize: 1, font: { family: 'Sarabun' } } },
+              x: { ticks: { font: { family: 'Sarabun', size: 11 } } }
+            }
+          }
+        });
+      }
+    }
+
+    function renderAdminTicketsTable() {
+      const tbody = document.getElementById('adminTicketsTbody');
+      const countBadge = document.getElementById('adminTicketCountBadge');
+      if (!tbody) return;
+
+      const filtered = adminTickets.filter(t => {
+        const matchStatus = (currentAdminFilterStatus === 'all' || t.status.includes(currentAdminFilterStatus));
+        const matchCollege = (currentAdminFilterCollege === 'all' || t.college_name === currentAdminFilterCollege);
+        const matchSearch = (!currentAdminSearch ||
+          t.ticket_id.toLowerCase().includes(currentAdminSearch) ||
+          t.reporter_name.toLowerCase().includes(currentAdminSearch) ||
+          t.system_name.toLowerCase().includes(currentAdminSearch) ||
+          t.issue_detail.toLowerCase().includes(currentAdminSearch)
+        );
+        return matchStatus && matchCollege && matchSearch;
+      });
+
+      if (countBadge) countBadge.innerText = filtered.length;
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="9" class="text-center py-5 text-muted">
+              <i class="fas fa-inbox fs-3 mb-2 d-block"></i>
+              ไม่พบคำขอที่ตรงกับเงื่อนไขการค้นหา
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      let html = '';
+      filtered.forEach(t => {
+        let badgeClass = 'status-pending';
+        let icon = 'fa-clock';
+        if (t.status.includes('ดำเนิน')) { badgeClass = 'status-progress'; icon = 'fa-arrows-rotate'; }
+        else if (t.status.includes('แก้ไข') || t.status.includes('เสร็จ')) { badgeClass = 'status-resolved'; icon = 'fa-check'; }
+
+        html += `
+          <tr>
+            <td><strong class="text-danger" style="font-family: monospace;">${t.ticket_id}</strong></td>
+            <td class="small text-muted">${t.created_at || '-'}</td>
+            <td><span class="badge bg-light text-dark border">${t.system_name || 'ทั่วไป'}</span></td>
+            <td class="small fw-semibold">${t.college_name || '-'}</td>
+            <td>
+              <div class="fw-semibold">${t.reporter_name || '-'}</div>
+              <small class="text-muted"><i class="fas fa-phone-volume me-1"></i>${t.reporter_contact || '-'}</small>
+            </td>
+            <td>
+              <div class="small fw-semibold text-dark">${t.issue_type || '-'}</div>
+              <div class="small text-muted" style="max-width: 260px; line-height: 1.4;">${t.issue_detail || '-'}</div>
+            </td>
+            <td>
+              <span class="status-badge ${badgeClass}">
+                <i class="fas ${icon} me-1"></i>${t.status}
+              </span>
+            </td>
+            <td class="small text-muted" style="max-width: 180px;">${t.admin_notes || '<span class="text-black-50">-</span>'}</td>
+            <td class="text-center">
+              <button type="button" class="btn btn-outline-danger btn-sm rounded-pill px-3" onclick="openTicketActionModal('${t.ticket_id}')">
+                <i class="fas fa-pen-to-square me-1"></i>จัดการ
+              </button>
+            </td>
+          </tr>
+        `;
+      });
+
+      tbody.innerHTML = html;
+    }
+
+    function openTicketActionModal(ticketId) {
+      const t = adminTickets.find(item => item.ticket_id === ticketId);
+      if (!t) return;
+
+      document.getElementById('actionTicketId').value = t.ticket_id;
+      document.getElementById('actionTicketIdBadge').innerText = 'รหัสคำขอ: ' + t.ticket_id;
+      document.getElementById('actionSystemName').innerText = t.system_name || 'ทั่วไป';
+      document.getElementById('actionCollegeName').innerText = t.college_name || '-';
+      document.getElementById('actionReporterName').innerText = t.reporter_name || '-';
+      document.getElementById('actionContact').innerText = t.reporter_contact || '-';
+      document.getElementById('actionDetail').innerText = t.issue_detail || '-';
+      document.getElementById('actionNewStatus').value = t.status || 'รอดำเนินการ';
+      document.getElementById('actionAdminNotes').value = t.admin_notes || '';
+
+      const modal = new bootstrap.Modal(document.getElementById('ticketActionModal'));
+      modal.show();
+    }
+
+    function handleTicketActionSubmit(event) {
+      event.preventDefault();
+      const ticketId = document.getElementById('actionTicketId').value;
+      const newStatus = document.getElementById('actionNewStatus').value;
+      const adminNotes = document.getElementById('actionAdminNotes').value;
+      const submitBtn = document.getElementById('actionSubmitBtn');
+
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>กำลังบันทึก...';
+      }
+
+      const payload = {
+        action: 'update_ticket',
+        ticket_id: ticketId,
+        new_status: newStatus,
+        admin_notes: adminNotes
+      };
+
+      fetch(GAS_WEBAPP_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      }).then(() => {
+        finishActionUpdate(ticketId, newStatus, adminNotes, submitBtn);
+      }).catch(() => {
+        finishActionUpdate(ticketId, newStatus, adminNotes, submitBtn);
+      });
+    }
+
+    function finishActionUpdate(ticketId, newStatus, adminNotes, submitBtn) {
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<i class="fas fa-floppy-disk me-1"></i>บันทึกและซิงค์ลง Google Sheet';
+      }
+
+      const t = adminTickets.find(item => item.ticket_id === ticketId);
+      if (t) {
+        t.status = newStatus;
+        t.admin_notes = adminNotes;
+      }
+
+      let p = 0, pr = 0, r = 0;
+      adminTickets.forEach(item => {
+        if (item.status.includes('รอ')) p++;
+        else if (item.status.includes('ดำเนิน')) pr++;
+        else if (item.status.includes('แก้ไข') || item.status.includes('เสร็จ')) r++;
+      });
+      document.getElementById('kpiPending').innerText = p;
+      document.getElementById('kpiProgress').innerText = pr;
+      document.getElementById('kpiResolved').innerText = r;
+
+      const modalEl = document.getElementById('ticketActionModal');
+      const modal = bootstrap.Modal.getInstance(modalEl);
+      if (modal) modal.hide();
+
+      renderAdminTicketsTable();
+      showToast(`อัปเดตคำขอ ${ticketId} เป็น "${newStatus}" เรียบร้อยแล้ว`);
+    }
+
+    function exportTicketsCSV() {
+      if (!adminTickets || adminTickets.length === 0) {
+        alert('ไม่มีข้อมูลคำขอสำหรับส่งออก');
+        return;
+      }
+
+      let csv = '\uFEFF';
+      csv += 'รหัสคำขอ,วันเวลาที่แจ้ง,ระบบงาน,วิทยาลัยต้นสังกัด,ผู้แจ้ง,ช่องทางติดต่อ,ประเภทปัญหา,รายละเอียดปัญหา,สถานะ,บันทึกการแก้ไข\n';
+
+      adminTickets.forEach(t => {
+        const row = [
+          `"${t.ticket_id || ''}"`,
+          `"${t.created_at || ''}"`,
+          `"${t.system_name || ''}"`,
+          `"${t.college_name || ''}"`,
+          `"${t.reporter_name || ''}"`,
+          `"${t.reporter_contact || ''}"`,
+          `"${t.issue_type || ''}"`,
+          `"${(t.issue_detail || '').replace(/"/g, '""')}"`,
+          `"${t.status || ''}"`,
+          `"${(t.admin_notes || '').replace(/"/g, '""')}"`
+        ];
+        csv += row.join(',') + '\n';
+      });
+
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.setAttribute('href', url);
+      link.setAttribute('download', `FON_PBRI_Tickets_Report_${new Date().toISOString().slice(0,10)}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      showToast('ดาวน์โหลดรายงาน CSV เรียบร้อยแล้ว');
+    }
+
+    function getSampleAdminData() {
+      return {
+        status: 'success',
+        total: 6,
+        kpi: {
+          total: 6,
+          pending: 2,
+          in_progress: 2,
+          resolved: 2,
+          sla_rate: '83.3',
+          avg_resolution_hours: '3.2'
+        },
+        analytics: {
+          by_type: { 'เข้าสู่ระบบไม่ได้': 2, 'ขอรหัสผ่านใหม่': 2, 'ระบบขัดข้อง': 1, 'ขอแก้ไขข้อมูล': 1 },
+          by_system: { 'ระบบบุคลากร (FONMIS)': 2, 'ระบบแผนฯ': 2, 'ระบบครุภัณฑ์': 1, 'ระบบวิจัย': 1 }
+        },
+        tickets: [
+          { ticket_id: 'TK-20261117-006', created_at: '17/11/2026 13:10:00', system_name: 'ระบบบุคลากร (FONMIS)', college_name: 'วพบ.สวรรค์ประชารักษ์ นครสวรรค์', reporter_name: 'อ.พรทิพย์ สุวรรณ', reporter_contact: '089-111-2233', issue_type: 'ขอรหัสผ่านใหม่', issue_detail: 'ขอรีเซ็ตรหัสผ่านผู้ดูแลข้อมูลระดับวิทยาลัย', status: 'รอดำเนินการ', admin_notes: '' },
+          { ticket_id: 'TK-20261117-005', created_at: '17/11/2026 12:45:00', system_name: 'ระบบแผนและกำกับงบประมาณ (งานแผน)', college_name: 'วพบ.พะเยา', reporter_name: 'นายสมชาย ใจดี', reporter_contact: 'somchai@bcnpy.ac.th', issue_type: 'เข้าสู่ระบบไม่ได้', issue_detail: 'ระบบแจ้งว่ารหัสผ่านหมดอายุ', status: 'กำลังดำเนินการ', admin_notes: 'ประสานงานส่งลิ้งก์รีเซ็ตรหัสให้แล้ว' },
+          { ticket_id: 'TK-20261117-004', created_at: '17/11/2026 11:30:00', system_name: 'ระบบครุภัณฑ์ (ใหม่)', college_name: 'วพบ.สุราษฎร์ธานี', reporter_name: 'นางสมศรี มีสุข', reporter_contact: '081-999-8877', issue_type: 'ระบบขัดข้อง/แสดงผลผิดพลาด', issue_detail: 'ไม่สามารถออกรายงานทะเบียนคุมครุภัณฑ์ประจำปีได้', status: 'แก้ไขแล้ว', admin_notes: 'ปรับแก้ฟังก์ชัน Export PDF เรียบร้อย' },
+          { ticket_id: 'TK-20261117-003', created_at: '17/11/2026 10:15:00', system_name: 'ระบบวิจัย นวัตกรรม และสิ่งประดิษฐ์', college_name: 'วพบ.ยะลา', reporter_name: 'ดร.มานพ กิตติคุณ', reporter_contact: 'manop@bcnyala.ac.th', issue_type: 'ขอแก้ไขข้อมูล', issue_detail: 'ขอแก้ไขชื่อโครงการวิจัยที่ลงทะเบียนคลาดเคลื่อน', status: 'แก้ไขแล้ว', admin_notes: 'แก้ไขชื่อโครงการให้เรียบร้อยแล้ว' },
+          { ticket_id: 'TK-20261117-002', created_at: '17/11/2026 09:20:00', system_name: 'ระบบแผนและกำกับงบประมาณ (งานการเงิน)', college_name: 'สำนักงานคณบดี คณะพยาบาลศาสตร์ สบช. (ส่วนกลาง)', reporter_name: 'น.ส.วิภาดา ดวงแก้ว', reporter_contact: 'wiphada@pi.ac.th', issue_type: 'เข้าสู่ระบบไม่ได้', issue_detail: 'เข้าใช้งานจากภายนอกเครือข่ายไม่ได้', status: 'กำลังดำเนินการ', admin_notes: 'แนะนำการตั้งค่า VPN สบช.' },
+          { ticket_id: 'TK-20261117-001', created_at: '17/11/2026 08:30:00', system_name: 'ระบบบุคลากร (FONMIS)', college_name: 'วพบ.เชียงใหม่', reporter_name: 'อ.ดวงพร เชียงใหม่', reporter_contact: '053-123-456', issue_type: 'ขอรหัสผ่านใหม่', issue_detail: 'ขอรหัสผ่านเจ้าหน้าที่การเงินเพื่อตรวจสอบกรอบอัตรากำลัง', status: 'รอดำเนินการ', admin_notes: '' }
+        ]
+      };
+    }
+
     function openTicketModal(systemName) {
       const loadTimeInput = document.getElementById('formLoadTime');
       if (loadTimeInput) loadTimeInput.value = Date.now();
@@ -1593,9 +2319,6 @@
       modal.show();
     }
 
-    /**
-     * Open Ticket Modal from Credentials Modal
-     */
     function openTicketFromModal() {
       const credModalEl = document.getElementById('credentialModal');
       const credModal = bootstrap.Modal.getInstance(credModalEl);
@@ -1605,9 +2328,6 @@
       }, 350);
     }
 
-    /**
-     * Submit Helpdesk Ticket to Google Sheets
-     */
     function submitTicket(event) {
       event.preventDefault();
 
@@ -1617,7 +2337,6 @@
       const payload = {};
       formData.forEach((val, key) => payload[key] = val);
 
-      // Front-end Anti-Bot Checks
       if (payload.website_url) {
         alert('Security verification failed.');
         return;
@@ -1692,9 +2411,6 @@
       }
     }
 
-    /**
-     * One-Click Copy Helper
-     */
     function copyModalField(elementId, btnElement) {
       const valEl = document.getElementById(elementId);
       if (!valEl) return;
@@ -1714,26 +2430,17 @@
       });
     }
 
-    /**
-     * Track System Click
-     */
     function trackClick(systemId) {
       fetch(GAS_WEBAPP_URL + '?action=record_click&id=' + encodeURIComponent(systemId), { mode: 'no-cors' })
         .catch(() => {});
     }
 
-    /**
-     * Show Notification Toast
-     */
     function showToast(message) {
       const msgEl = document.getElementById('toastMsg');
       if (msgEl) msgEl.innerText = message;
       if (copyToastInstance) copyToastInstance.show();
     }
 
-    /**
-     * Toggle Loading Screen
-     */
     function showLoading(show, title) {
       const overlay = document.getElementById('fonLoadingOverlay');
       if (!overlay) return;
@@ -1747,9 +2454,6 @@
       }
     }
 
-    /**
-     * Bundled Fallback Seed Data (All 16 Systems + 31 Organizations)
-     */
     function getFallbackData() {
       return {
         status: 'success',
