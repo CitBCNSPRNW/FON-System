@@ -670,12 +670,6 @@
             <i class="fas fa-shield-halved"></i>
             <span>จัดการระบบ (Admin)</span>
           </button>
-
-          <!-- Helpdesk Ticket Button -->
-          <button type="button" class="btn btn-warning btn-sm rounded-pill px-3 d-flex align-items-center gap-2" style="font-weight: 600; background: var(--fon-accent); border-color: var(--fon-accent); color: #ffffff;" onclick="openTicketModal('')">
-            <i class="fas fa-ticket"></i>
-            <span>แจ้งปัญหาการใช้งาน</span>
-          </button>
           
           <span class="badge rounded-pill bg-light text-danger border px-3 py-2 d-none d-lg-inline-block" id="totalSystemsBadge" style="font-weight: 600; font-size: 0.82rem; border-color: #fecaca !important;">
             <i class="fas fa-layer-group me-1"></i>16 ระบบงาน
@@ -816,16 +810,16 @@
             <small class="text-muted">Faculty of Nursing, Praboromarajchanok Institute (FON-PBRI)</small>
           </div>
           <div class="text-md-end">
-            <small class="text-muted d-block">Version v1.4.0 | Build 2026.11.17</small>
+            <small class="text-muted d-block">Version v1.5.0 | Build 2026.11.17</small>
           </div>
         </div>
       </div>
     </footer>
 
-    <!-- Floating Helpdesk Button -->
-    <button type="button" class="fon-float-helpdesk" onclick="openTicketModal('')" title="แจ้งปัญหาการใช้งาน">
+    <!-- Floating Helpdesk & Tracking Button -->
+    <button type="button" class="fon-float-helpdesk" onclick="openTicketModal('')" title="แจ้งปัญหาการใช้งาน หรือ ติดตามสถานะคำขอ">
       <i class="fas fa-headset"></i>
-      <span>แจ้งปัญหาการใช้งาน</span>
+      <span>แจ้งปัญหา / ติดตามสถานะ</span>
     </button>
   </div>
 
@@ -1174,19 +1168,31 @@
   <div class="modal fade" id="ticketModal" tabindex="-1" aria-labelledby="ticketModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg">
       <div class="modal-content">
-        <div class="modal-header">
+        <div class="modal-header pb-2">
           <div class="d-flex align-items-center gap-3">
             <div style="width: 44px; height: 44px; border-radius: 12px; background: #fef3c7; color: #b45309; display: flex; align-items: center; justify-content: center; font-size: 1.3rem;">
               <i class="fas fa-ticket"></i>
             </div>
             <div>
-              <h5 class="modal-title font-weight-bold" id="ticketModalLabel" style="font-weight: 700; font-size: 1.15rem;">แจ้งปัญหาการใช้งาน / ขอรับบริการ</h5>
+              <h5 class="modal-title font-weight-bold" id="ticketModalLabel" style="font-weight: 700; font-size: 1.15rem;">ศูนย์แจ้งปัญหาการใช้งาน &amp; ติดตามสถานะคำขอ</h5>
               <small class="text-muted">ระบบรับเรื่องและประสานงาน คณะพยาบาลศาสตร์ สถาบันพระบรมราชชนก</small>
             </div>
           </div>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
 
+        <!-- Dual-Mode Switcher Tabs (Create Ticket vs Track My Ticket) -->
+        <div class="px-4 pt-2 border-bottom bg-light d-flex gap-2">
+          <button type="button" class="btn btn-sm rounded-top-3 px-3 py-2 fw-bold border-0" id="tabBtnCreate" style="background: var(--fon-primary); color: #ffffff;" onclick="switchTicketModalTab('create')">
+            <i class="fas fa-pen-to-square me-1"></i>แจ้งปัญหาการใช้งานใหม่
+          </button>
+          <button type="button" class="btn btn-sm rounded-top-3 px-3 py-2 fw-bold border-0 text-muted bg-transparent" id="tabBtnTrack" onclick="switchTicketModalTab('track')">
+            <i class="fas fa-magnifying-glass-location me-1"></i>ค้นหา / ติดตามสถานะที่เคยแจ้ง
+          </button>
+        </div>
+
+        <!-- TAB 1: CREATE TICKET FORM -->
+        <div id="ticketCreatePane">
         <form id="fonTicketForm" onsubmit="submitTicket(event)">
           <div class="modal-body">
             <!-- Anti-Bot Honeypot Field -->
@@ -1329,10 +1335,42 @@
           <div class="modal-footer border-0 pt-0">
             <button type="button" class="btn btn-light rounded-pill px-3" data-bs-dismiss="modal">ยกเลิก</button>
             <button type="submit" class="btn btn-warning rounded-pill px-4" id="submitTicketBtn" style="font-weight: 600; color: #78350f;">
-              <i class="fas fa-paper-plane me-1"></i>ส่งเรื่องแจ้งปัญหาลงชีต
+              <i class="fas fa-paper-plane me-1"></i>ส่งเรื่องแจ้งปัญหา
             </button>
           </div>
         </form>
+        </div>
+
+        <!-- TAB 2: TRACK MY TICKET PANE -->
+        <div id="ticketTrackPane" style="display: none;">
+          <div class="modal-body">
+            <div class="p-3 rounded-3 mb-3" style="background: #fdf2f4; border: 1px solid #fecdd3;">
+              <label class="form-label fw-bold small mb-2" style="color: var(--fon-primary);">
+                <i class="fas fa-magnifying-glass me-1"></i>ค้นหาข้อมูลการแจ้งปัญหาของคุณ
+              </label>
+              <div class="input-group">
+                <input type="text" class="form-control" id="trackTicketInput" placeholder="ระบุ เบอร์โทรศัพท์ (เช่น 0812345678), รหัสคำขอ (TK-...), หรือ ชื่อผู้แจ้ง" onkeydown="if(event.key==='Enter'){event.preventDefault();handleTrackTicketSearch();}">
+                <button class="btn btn-danger px-4 fw-bold" type="button" style="background: var(--fon-primary);" onclick="handleTrackTicketSearch()" id="trackSearchBtn">
+                  <i class="fas fa-search me-1"></i>ค้นหา
+                </button>
+              </div>
+              <div class="small text-muted mt-1">
+                สามารถค้นหาได้จากเบอร์โทรศัพท์ที่กรอกไว้ รหัสติดตาม (TK-...) หรือชื่อ-นามสกุลผู้แจ้ง
+              </div>
+              <div id="myRecentTicketsBar" class="mt-2" style="display: none;"></div>
+            </div>
+
+            <div id="trackTicketResults" style="max-height: 380px; overflow-y: auto;">
+              <div class="text-center py-4 text-muted">
+                <i class="fas fa-clipboard-question fs-2 mb-2 d-block opacity-50"></i>
+                กรอกเบอร์โทรศัพท์ รหัสคำขอ หรือชื่อผู้แจ้ง เพื่อดูสถานะการดำเนินการและผลการแก้ไข
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer border-0 pt-0">
+            <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">ปิดหน้าต่าง</button>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -1838,35 +1876,59 @@
       }
     }
 
+    function normalizeContactPhone(val) {
+      let s = String(val === undefined || val === null ? '' : val).trim().replace(/^'+/, '');
+      if (/^[2-9]\d{8}$/.test(s)) {
+        s = '0' + s;
+      }
+      return s;
+    }
+
     /**
-     * Fetch Portal Data
+     * Fetch Portal Data (Instant Cache Render + Live Background Revalidation)
      */
     function loadPortalData() {
-      showLoading(true, 'กำลังเตรียมข้อมูล...');
       const apiUrl = getGasUrl();
 
-      fetch(apiUrl + '?action=init_database&_t=' + Date.now(), { method: 'GET', mode: 'cors' })
-        .catch(() => {})
-        .finally(() => {
-          fetch(apiUrl + '?action=get_portal_data&_t=' + Date.now(), { method: 'GET', mode: 'cors' })
-            .then(res => {
-              if (!res.ok) throw new Error('HTTP Status ' + res.status);
-              return res.json();
-            })
-            .then(data => {
-              if (data && data.systems && data.systems.length > 0) {
-                handleDataResponse(data);
-                syncLocalTicketsToSheet();
-              } else {
-                throw new Error('Empty or invalid data');
-              }
-              showLoading(false);
-            })
-            .catch(err => {
-              console.warn('API call failed or endpoint not ready, using bundled seed data:', err);
-              handleDataResponse(getFallbackData());
-              showLoading(false);
-            });
+      // 1. Instant render from local cache or seed so user never waits at a loading screen
+      try {
+        const cachedStr = localStorage.getItem('fon_portal_data_cache');
+        if (cachedStr) {
+          const cachedObj = JSON.parse(cachedStr);
+          if (cachedObj && cachedObj.systems && cachedObj.systems.length > 0) {
+            handleDataResponse(cachedObj);
+            setTimeout(() => showLoading(false), 120);
+          }
+        } else {
+          handleDataResponse(getFallbackData());
+          setTimeout(() => showLoading(false), 180);
+        }
+      } catch (e) {
+        handleDataResponse(getFallbackData());
+        setTimeout(() => showLoading(false), 180);
+      }
+
+      // 2. Single fast live fetch from Google Sheets in background
+      fetch(apiUrl + '?action=get_portal_data&_t=' + Date.now(), { method: 'GET', mode: 'cors' })
+        .then(res => {
+          if (!res.ok) throw new Error('HTTP Status ' + res.status);
+          return res.json();
+        })
+        .then(data => {
+          if (data && data.systems && data.systems.length > 0) {
+            handleDataResponse(data);
+            try {
+              localStorage.setItem('fon_portal_data_cache', JSON.stringify(data));
+            } catch (e) {}
+            syncLocalTicketsToSheet();
+          }
+          showLoading(false);
+          // Background cache invalidation on GAS so next edit in Sheet is always ready
+          fetch(apiUrl + '?action=init_database&_t=' + Date.now(), { method: 'GET', mode: 'cors' }).catch(() => {});
+        })
+        .catch(err => {
+          console.warn('Background sync notice:', err);
+          showLoading(false);
         });
     }
 
@@ -2132,7 +2194,12 @@
             showToast(`ยินดีต้อนรับคุณ ${adminObj.name}`);
             switchView('admin');
           } else {
-            alert('❌ ' + ((data && data.message) || 'ข้อมูลการเข้าใช้งานไม่ถูกต้อง กรุณาตรวจสอบอีเมลและรหัส PIN ในชีต Admins อีกครั้ง'));
+            const msg = (data && data.message) || 'ข้อมูลการเข้าใช้งานไม่ถูกต้อง กรุณาตรวจสอบอีเมลและรหัส PIN ในชีต Admins อีกครั้ง';
+            if (msg === 'รหัสความปลอดภัย (Security PIN) ไม่ถูกต้อง กรุณาตรวจสอบอีกครั้ง') {
+              alert('⚠️ ตัว Web App ใน Google Apps Script ยังค้างอยู่ที่เวอร์ชัน 2 (@2) จึงยังไม่อ่านคอลัมน์ pin ที่เพิ่งแก้ในชีตค่ะ\n\nวิธีสลับเป็นเวอร์ชันล่าสุด (ทำครั้งเดียว):\n1. เปิดหน้า Google Apps Script\n2. กดปุ่ม "การทำให้ใช้งานได้" > "จัดการการทำให้ใช้งานได้"\n3. กดไอคอน "รูปดินสอ ✏️" มุมขวาบน\n4. ช่องเวอร์ชัน เลือก "เวอร์ชัน 5 (v1.5.0)" แล้วกด "การทำให้ใช้งานได้" ค่ะ');
+            } else {
+              alert('❌ ' + msg);
+            }
           }
         })
         .catch(err => {
@@ -2212,7 +2279,10 @@
         res = getSampleAdminData();
       }
 
-      adminTickets = res.tickets || [];
+      adminTickets = (res.tickets || []).map(t => {
+        t.reporter_contact = normalizeContactPhone(t.reporter_contact);
+        return t;
+      });
 
       // Update KPI Metric Cards
       const kpi = res.kpi || {};
@@ -2318,6 +2388,7 @@
         const matchSearch = (!currentAdminSearch ||
           t.ticket_id.toLowerCase().includes(currentAdminSearch) ||
           t.reporter_name.toLowerCase().includes(currentAdminSearch) ||
+          (t.reporter_contact && t.reporter_contact.toLowerCase().includes(currentAdminSearch)) ||
           t.system_name.toLowerCase().includes(currentAdminSearch) ||
           t.issue_detail.toLowerCase().includes(currentAdminSearch)
         );
@@ -2521,7 +2592,201 @@
       };
     }
 
-    function openTicketModal(systemName) {
+    function switchTicketModalTab(mode) {
+      const createPane = document.getElementById('ticketCreatePane');
+      const trackPane = document.getElementById('ticketTrackPane');
+      const btnCreate = document.getElementById('tabBtnCreate');
+      const btnTrack = document.getElementById('tabBtnTrack');
+
+      if (mode === 'track') {
+        if (createPane) createPane.style.display = 'none';
+        if (trackPane) trackPane.style.display = 'block';
+        if (btnCreate) {
+          btnCreate.style.background = 'transparent';
+          btnCreate.style.color = '#64748b';
+        }
+        if (btnTrack) {
+          btnTrack.style.background = 'var(--fon-primary)';
+          btnTrack.style.color = '#ffffff';
+        }
+        renderMyRecentTicketsBar();
+      } else {
+        if (trackPane) trackPane.style.display = 'none';
+        if (createPane) createPane.style.display = 'block';
+        if (btnTrack) {
+          btnTrack.style.background = 'transparent';
+          btnTrack.style.color = '#64748b';
+        }
+        if (btnCreate) {
+          btnCreate.style.background = 'var(--fon-primary)';
+          btnCreate.style.color = '#ffffff';
+        }
+      }
+    }
+
+    function renderMyRecentTicketsBar() {
+      const bar = document.getElementById('myRecentTicketsBar');
+      if (!bar) return;
+      try {
+        const myIds = JSON.parse(localStorage.getItem('fon_my_ticket_ids') || '[]');
+        if (myIds.length > 0) {
+          bar.style.display = 'block';
+          bar.innerHTML = '<small class="text-muted me-1">รายการที่คุณเคยแจ้ง:</small>' +
+            myIds.slice(-4).reverse().map(id =>
+              `<button type="button" class="badge rounded-pill bg-white text-danger border border-danger me-1 py-1 px-2" style="cursor:pointer;" onclick="document.getElementById('trackTicketInput').value='${id}';handleTrackTicketSearch();">${id}</button>`
+            ).join('');
+        } else {
+          bar.style.display = 'none';
+        }
+      } catch (e) {
+        bar.style.display = 'none';
+      }
+    }
+
+    function handleTrackTicketSearch() {
+      const inputEl = document.getElementById('trackTicketInput');
+      const resultsEl = document.getElementById('trackTicketResults');
+      const searchBtn = document.getElementById('trackSearchBtn');
+      const query = (inputEl ? inputEl.value : '').trim().toLowerCase();
+
+      if (!query || query.length < 2) {
+        alert('กรุณาระบุคำค้นหาอย่างน้อย 2 ตัวอักษร (เช่น เบอร์โทรศัพท์, รหัสคำขอ TK-..., หรือ ชื่อผู้แจ้ง)');
+        return;
+      }
+
+      if (searchBtn) {
+        searchBtn.disabled = true;
+        searchBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>ค้นหา...';
+      }
+      if (resultsEl) {
+        resultsEl.innerHTML = '<div class="text-center py-4 text-muted"><div class="spinner-border spinner-border-sm text-danger me-2"></div>กำลังค้นหาข้อมูลคำขอของคุณ...</div>';
+      }
+
+      const apiUrl = getGasUrl();
+      const cleanQueryDigits = query.replace(/[\s\-]/g, '');
+
+      fetch(apiUrl + '?action=get_tickets&_t=' + Date.now(), { method: 'GET', mode: 'cors' })
+        .then(res => res.json())
+        .then(data => {
+          if (searchBtn) {
+            searchBtn.disabled = false;
+            searchBtn.innerHTML = '<i class="fas fa-search me-1"></i>ค้นหา';
+          }
+
+          const allList = (data && data.tickets) ? data.tickets : [];
+          const matched = allList.filter(t => {
+            const tid = String(t.ticket_id || '').toLowerCase();
+            const rname = String(t.reporter_name || '').toLowerCase();
+            const rphone = normalizeContactPhone(t.reporter_contact).toLowerCase();
+            const rphoneDigits = rphone.replace(/[\s\-]/g, '');
+
+            return tid.includes(query) ||
+              rname.includes(query) ||
+              rphone.includes(query) ||
+              (cleanQueryDigits.length >= 4 && rphoneDigits.includes(cleanQueryDigits));
+          });
+
+          renderTrackTicketResults(matched);
+        })
+        .catch(err => {
+          if (searchBtn) {
+            searchBtn.disabled = false;
+            searchBtn.innerHTML = '<i class="fas fa-search me-1"></i>ค้นหา';
+          }
+          if (resultsEl) {
+            resultsEl.innerHTML = '<div class="alert alert-warning small">ไม่สามารถดึงข้อมูลคำขอได้ในขณะนี้ กรุณาลองใหม่อีกครั้ง</div>';
+          }
+        });
+    }
+
+    function renderTrackTicketResults(list) {
+      const resultsEl = document.getElementById('trackTicketResults');
+      if (!resultsEl) return;
+
+      if (!list || list.length === 0) {
+        resultsEl.innerHTML = `
+          <div class="text-center py-4 text-muted border rounded-3 bg-light">
+            <i class="fas fa-inbox fs-3 mb-2 d-block text-secondary"></i>
+            <div class="fw-bold">ไม่พบรายการแจ้งปัญหาที่ตรงกับคำค้นหา</div>
+            <small>กรุณาตรวจสอบเบอร์โทรศัพท์ รหัสคำขอ หรือชื่อผู้แจ้งอีกครั้ง</small>
+          </div>
+        `;
+        return;
+      }
+
+      let html = `<div class="small text-muted mb-2 fw-semibold">พบรายการแจ้งปัญหาของคุณจำนวน ${list.length} รายการ:</div>`;
+      list.forEach(t => {
+        const st = String(t.status || 'รอดำเนินการ');
+        const isProgress = st.includes('ดำเนิน');
+        const isResolved = st.includes('แก้ไข') || st.includes('เสร็จ');
+
+        let badgeClass = 'status-pending';
+        if (isProgress) badgeClass = 'status-progress';
+        else if (isResolved) badgeClass = 'status-resolved';
+
+        const step1Color = '#10b981';
+        const step2Color = (isProgress || isResolved) ? '#3b82f6' : '#cbd5e1';
+        const step3Color = isResolved ? '#10b981' : '#cbd5e1';
+
+        html += `
+          <div class="p-3 mb-3 rounded-3 border bg-white shadow-sm">
+            <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 pb-2 mb-2 border-bottom">
+              <div>
+                <span class="fw-bold text-danger" style="font-family: monospace; font-size: 0.95rem;">${t.ticket_id}</span>
+                <span class="text-muted small ms-2"><i class="far fa-clock me-1"></i>${t.created_at || '-'}</span>
+              </div>
+              <span class="status-badge ${badgeClass}">${st}</span>
+            </div>
+
+            <!-- 3-Step Visual Progress Tracker -->
+            <div class="d-flex align-items-center justify-content-between text-center my-2 px-2 py-2 rounded-2" style="background: #f8fafc; font-size: 0.78rem;">
+              <div style="color: ${step1Color}; font-weight: 700;">
+                <i class="fas fa-check-circle me-1"></i>1. รับเรื่องแล้ว
+              </div>
+              <div style="flex: 1; height: 2px; background: ${step2Color}; margin: 0 8px;"></div>
+              <div style="color: ${step2Color}; font-weight: ${(isProgress || isResolved) ? '700' : '500'};">
+                <i class="fas ${isProgress ? 'fa-spinner fa-spin' : (isResolved ? 'fa-check-circle' : 'fa-circle')} me-1"></i>2. กำลังดำเนินการ
+              </div>
+              <div style="flex: 1; height: 2px; background: ${step3Color}; margin: 0 8px;"></div>
+              <div style="color: ${step3Color}; font-weight: ${isResolved ? '700' : '500'};">
+                <i class="fas ${isResolved ? 'fa-check-circle' : 'fa-circle'} me-1"></i>3. แก้ไขเสร็จสิ้น
+              </div>
+            </div>
+
+            <div class="row g-2 small mt-1">
+              <div class="col-sm-6">
+                <span class="text-muted">ระบบงาน:</span> <strong class="text-dark">${t.system_name || 'ทั่วไป'}</strong>
+              </div>
+              <div class="col-sm-6">
+                <span class="text-muted">หน่วยงาน:</span> <strong class="text-dark">${t.college_name || '-'}</strong>
+              </div>
+              <div class="col-12">
+                <span class="text-muted">ปัญหาที่แจ้ง (${t.issue_type || '-'}):</span>
+                <span class="text-dark">${t.issue_detail || '-'}</span>
+              </div>
+            </div>
+
+            ${t.admin_notes ? `
+              <div class="mt-2 p-2 rounded-2 small" style="background: #ecfdf5; border: 1px solid #a7f3d0; color: #065f46;">
+                <strong><i class="fas fa-comment-dots me-1"></i>ผลการดำเนินการ / ข้อความจากผู้ดูแลระบบ:</strong>
+                <div class="mt-1">${t.admin_notes}</div>
+                ${t.resolved_at ? `<div class="text-muted mt-1" style="font-size: 0.72rem;">อัปเดตเมื่อ: ${t.resolved_at}</div>` : ''}
+              </div>
+            ` : `
+              <div class="mt-2 p-2 rounded-2 small text-muted" style="background: #fffbeb; border: 1px solid #fde68a;">
+                <i class="fas fa-hourglass-half text-warning me-1"></i>อยู่ระหว่างรอผู้ดูแลระบบตรวจสอบและบันทึกผลการแก้ไข
+              </div>
+            `}
+          </div>
+        `;
+      });
+
+      resultsEl.innerHTML = html;
+    }
+
+    function openTicketModal(systemName, initialTab) {
+      switchTicketModalTab(initialTab || 'create');
+
       const loadTimeInput = document.getElementById('formLoadTime');
       if (loadTimeInput) loadTimeInput.value = Date.now();
 
@@ -2594,15 +2859,19 @@
 
       if (submitBtn) {
         submitBtn.disabled = true;
-        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>กำลังส่งข้อมูลลงชีต...';
+        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>กำลังส่งข้อมูล...';
       }
+
+      // Preserve leading '0' in phone numbers when writing to Google Sheets
+      const cleanContact = normalizeContactPhone(payload.reporter_contact || '');
+      const sheetSafeContact = /^0\d+$/.test(cleanContact) ? ("'" + cleanContact) : cleanContact;
 
       const queryParams = new URLSearchParams();
       queryParams.set('action', 'create_ticket');
       queryParams.set('system_name', payload.system_name || 'ทั่วไป');
       queryParams.set('college_name', payload.college_name || '');
       queryParams.set('reporter_name', payload.reporter_name || '');
-      queryParams.set('reporter_contact', payload.reporter_contact || '');
+      queryParams.set('reporter_contact', sheetSafeContact);
       queryParams.set('issue_type', payload.issue_type || 'ทั่วไป');
       queryParams.set('issue_detail', payload.issue_detail || '');
       queryParams.set('math_answer', payload.math_answer || '');
@@ -2632,8 +2901,18 @@
     function handleTicketSuccess(res, form, submitBtn) {
       if (submitBtn) {
         submitBtn.disabled = false;
-        submitBtn.innerHTML = '<i class="fas fa-paper-plane me-1"></i>ส่งเรื่องแจ้งปัญหาลงชีต';
+        submitBtn.innerHTML = '<i class="fas fa-paper-plane me-1"></i>ส่งเรื่องแจ้งปัญหา';
       }
+
+      try {
+        if (res && res.ticketId) {
+          const myIds = JSON.parse(localStorage.getItem('fon_my_ticket_ids') || '[]');
+          if (!myIds.includes(res.ticketId)) {
+            myIds.push(res.ticketId);
+            localStorage.setItem('fon_my_ticket_ids', JSON.stringify(myIds));
+          }
+        }
+      } catch (e) {}
 
       const ticketModalEl = document.getElementById('ticketModal');
       const modal = bootstrap.Modal.getInstance(ticketModalEl);
@@ -2642,7 +2921,7 @@
       form.reset();
 
       showToast(`ส่งเรื่องสำเร็จแล้ว! รหัสติดตาม: ${res.ticketId || 'TK-REC'}`);
-      alert(`✅ บันทึกการแจ้งปัญหาสำเร็จแล้วเจ้าค่ะ!\n\nรหัสติดตามของคุณ: ${res.ticketId}\nระบบได้บันทึกข้อมูลและส่งเรื่องให้ผู้ดูแลระบบ คณะพยาบาลศาสตร์ ประสานงานดำเนินการให้เรียบร้อยแล้วค่ะ`);
+      alert(`✅ บันทึกการแจ้งปัญหาสำเร็จแล้วเจ้าค่ะ!\n\nรหัสติดตามของคุณ: ${res.ticketId}\nคุณสามารถนำรหัสติดตามหรือเบอร์โทรศัพท์มาค้นหาความคืบหน้าได้ที่ปุ่ม "แจ้งปัญหา / ติดตามสถานะ" ค่ะ`);
     }
 
     function saveTicketLocally(payload, ticketId) {
