@@ -606,14 +606,15 @@
       border-bottom: 2px solid #f2e8e8;
       color: #44403c;
       font-weight: 600;
-      font-size: 0.85rem;
-      padding: 12px 14px;
+      font-size: 0.82rem;
+      padding: 8px 10px;
       white-space: nowrap;
     }
 
     .fon-table tbody td {
-      padding: 12px 14px;
-      font-size: 0.88rem;
+      padding: 6px 10px;
+      font-size: 0.83rem;
+      line-height: 1.25;
       vertical-align: middle;
       border-bottom: 1px solid #f5f5f4;
     }
@@ -623,13 +624,14 @@
     }
 
     .status-badge {
-      padding: 4px 10px;
+      padding: 3px 9px;
       border-radius: 30px;
-      font-size: 0.78rem;
+      font-size: 0.75rem;
       font-weight: 600;
       display: inline-flex;
       align-items: center;
       gap: 4px;
+      white-space: nowrap;
     }
 
     .status-pending { background: #fef3c7; color: #92400e; }
@@ -852,11 +854,6 @@
           <!-- Export CSV -->
           <button type="button" class="btn btn-outline-warning btn-sm rounded-pill px-3" onclick="exportTicketsCSV()" title="ส่งออกรายงานคำขอ">
             <i class="fas fa-file-excel me-1"></i>Export CSV
-          </button>
-
-          <!-- API Endpoint Config Button -->
-          <button type="button" class="btn btn-warning btn-sm rounded-pill px-3 text-dark fw-bold" onclick="openApiConfigModal()" title="ตั้งค่า Web App API">
-            <i class="fas fa-plug me-1"></i>ตั้งค่า API ชีต
           </button>
 
           <!-- Back to Public View -->
@@ -1314,6 +1311,23 @@
                 <textarea class="form-control" name="issue_detail" rows="3" placeholder="โปรดระบุอาการที่พบ เช่น ขึ้นแจ้งเตือนว่าอย่างไร เกิดขึ้นในขั้นตอนใด..." required></textarea>
               </div>
 
+              <!-- Image Attachments (Up to 5 Images) -->
+              <div class="col-md-12">
+                <div class="p-3 rounded-3 border" style="background: #fcfbfb; border-style: dashed !important; border-color: #cbd5e1 !important;">
+                  <div class="d-flex align-items-center justify-content-between mb-2">
+                    <label class="form-label fw-bold small mb-0" style="color: var(--fon-primary); cursor: pointer;" for="ticketImagesInput">
+                      <i class="fas fa-images me-1"></i>แนบรูปภาพประกอบปัญหา (เพิ่มได้สูงสุด 5 รูป)
+                    </label>
+                    <span class="badge rounded-pill bg-danger-subtle text-danger" id="ticketImageCountBadge">0 / 5 รูป</span>
+                  </div>
+                  <input type="file" class="form-control form-control-sm" id="ticketImagesInput" accept="image/*" multiple onchange="handleTicketImagesSelect(event)">
+                  <div class="small text-muted mt-1" style="font-size: 0.74rem;">
+                    สามารถเลือกทีละรูปหรือหลายรูปพร้อมกันได้ (คลิกที่รูปตัวอย่างเพื่อขยายดู หรือกดปุ่ม × เพื่อลบรูป)
+                  </div>
+                  <div id="ticketImagePreviewGrid" class="d-flex flex-wrap gap-2 mt-2"></div>
+                </div>
+              </div>
+
               <!-- Anti-Bot Cognitive Math Challenge -->
               <div class="col-md-12">
                 <div class="p-3 bg-light rounded-3 border d-flex flex-column flex-sm-row align-items-sm-center justify-content-between gap-3">
@@ -1517,6 +1531,10 @@
                 <div class="col-6"><strong>ผู้แจ้ง:</strong> <span id="actionReporterName">-</span></div>
                 <div class="col-6"><strong>ติดต่อ:</strong> <span id="actionContact">-</span></div>
                 <div class="col-12 mt-2"><strong>อาการที่พบ:</strong> <span id="actionDetail" class="text-muted">-</span></div>
+                <div class="col-12 mt-2" id="actionImagesWrapper" style="display: none;">
+                  <strong class="d-block mb-1"><i class="fas fa-images text-danger me-1"></i>รูปภาพประกอบที่แนบมา:</strong>
+                  <div id="actionImagesGrid" class="d-flex flex-wrap gap-2"></div>
+                </div>
               </div>
             </div>
 
@@ -1623,8 +1641,24 @@
     </div>
   </div>
 
-  <!-- Chart.js Core for Visual Analytics -->
+  <!-- Image Lightbox Modal -->
+  <div class="modal fade" id="imageLightboxModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content bg-dark text-white border-0 shadow-lg" style="border-radius: 16px;">
+        <div class="modal-header border-0 pb-1">
+          <h6 class="modal-title fw-bold mb-0"><i class="fas fa-magnifying-glass-plus me-2 text-warning"></i>ดูรูปภาพประกอบขนาดขยาย</h6>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body text-center p-3">
+          <img id="lightboxMainImage" src="" alt="Preview" style="max-width: 100%; max-height: 75vh; border-radius: 10px; object-fit: contain;">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Chart.js Core & DataLabels Plugin for Visual Analytics -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 
   <!-- Bootstrap 5.3 Bundle JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
@@ -2298,10 +2332,52 @@
       renderAdminTicketsTable();
     }
 
+    function formatShortDateTime(val) {
+      if (!val) return '-';
+      const s = String(val).trim();
+      if (/^\d{2}\/\d{2}\/\d{4}/.test(s)) {
+        return s.slice(0, 16);
+      }
+      const d = new Date(s);
+      if (!isNaN(d.getTime())) {
+        const dd = String(d.getDate()).padStart(2, '0');
+        const mm = String(d.getMonth() + 1).padStart(2, '0');
+        const yyyy = d.getFullYear();
+        const hh = String(d.getHours()).padStart(2, '0');
+        const min = String(d.getMinutes()).padStart(2, '0');
+        return `${dd}/${mm}/${yyyy} ${hh}:${min}`;
+      }
+      return s;
+    }
+
+    function parseTicketDetailAndImages(rawDetail) {
+      const raw = String(rawDetail || '');
+      const markerIdx = raw.indexOf('[[IMAGES:');
+      if (markerIdx === -1) {
+        return { text: raw.trim() || '-', images: [] };
+      }
+      const textPart = raw.slice(0, markerIdx).trim() || '-';
+      const jsonPart = raw.slice(markerIdx + 9).replace(/\]\]\s*$/, '');
+      try {
+        const imgs = JSON.parse(jsonPart);
+        return { text: textPart, images: Array.isArray(imgs) ? imgs : [] };
+      } catch (e) {
+        return { text: textPart, images: [] };
+      }
+    }
+
+    function openImageLightbox(src) {
+      const img = document.getElementById('lightboxMainImage');
+      if (img) img.src = src;
+      const modal = new bootstrap.Modal(document.getElementById('imageLightboxModal'));
+      modal.show();
+    }
+
     function renderAdminCharts(analytics) {
       if (typeof Chart === 'undefined') return;
+      const hasDataLabels = (typeof ChartDataLabels !== 'undefined');
 
-      // Chart 1: Issue Types (Doughnut)
+      // Chart 1: Issue Types (Doughnut with DataLabels & Center Metric)
       const ctxTypes = document.getElementById('chartIssueTypes');
       if (ctxTypes) {
         if (chartIssueTypesInstance) chartIssueTypesInstance.destroy();
@@ -2313,30 +2389,78 @@
           'ขอแก้ไขข้อมูล': 3,
           'อื่นๆ': 1
         };
+        const typeValues = Object.values(typeData).map(v => Number(v || 0));
+        const totalSum = typeValues.reduce((a, b) => a + b, 0);
+
+        const doughnutPlugins = [];
+        if (hasDataLabels) doughnutPlugins.push(ChartDataLabels);
+        doughnutPlugins.push({
+          id: 'centerMetricPlugin',
+          beforeDraw: function(chart) {
+            const { width, ctx } = chart;
+            const centerY = chart.chartArea ? (chart.chartArea.top + chart.chartArea.bottom) / 2 : chart.height / 2;
+            const centerX = width / 2;
+            ctx.save();
+            ctx.font = 'bold 22px Sarabun';
+            ctx.fillStyle = '#7a0c1e';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(totalSum.toLocaleString('th-TH'), centerX, centerY - 8);
+            ctx.font = '600 11px Sarabun';
+            ctx.fillStyle = '#64748b';
+            ctx.fillText('คำขอทั้งหมด', centerX, centerY + 13);
+            ctx.restore();
+          }
+        });
 
         chartIssueTypesInstance = new Chart(ctxTypes, {
           type: 'doughnut',
           data: {
             labels: Object.keys(typeData),
             datasets: [{
-              data: Object.values(typeData),
+              data: typeValues,
               backgroundColor: ['#ef4444', '#f59e0b', '#3b82f6', '#10b981', '#8b5cf6'],
               borderWidth: 2,
-              borderColor: '#ffffff'
+              borderColor: '#ffffff',
+              hoverOffset: 5
             }]
           },
           options: {
             responsive: true,
             maintainAspectRatio: false,
             plugins: {
-              legend: { position: 'bottom', labels: { font: { family: 'Sarabun', size: 11 } } }
+              legend: { position: 'bottom', labels: { font: { family: 'Sarabun', size: 11 }, padding: 12, usePointStyle: true } },
+              tooltip: {
+                callbacks: {
+                  label: function(context) {
+                    const val = Number(context.raw || 0);
+                    const pct = totalSum > 0 ? ((val / totalSum) * 100).toFixed(1) : '0.0';
+                    return ` ${context.label}: ${val.toLocaleString('th-TH')} เรื่อง (${pct}%)`;
+                  }
+                }
+              },
+              datalabels: {
+                display: function(context) {
+                  const val = Number(context.dataset.data[context.dataIndex] || 0);
+                  return totalSum > 0 && val > 0;
+                },
+                formatter: function(value) {
+                  const pct = totalSum > 0 ? ((Number(value) / totalSum) * 100).toFixed(0) : 0;
+                  return `${value} (${pct}%)`;
+                },
+                color: '#ffffff',
+                font: { family: 'Sarabun', weight: 'bold', size: 12 },
+                textStrokeColor: 'rgba(0, 0, 0, 0.35)',
+                textStrokeWidth: 2
+              }
             },
-            cutout: '65%'
-          }
+            cutout: '64%'
+          },
+          plugins: doughnutPlugins
         });
       }
 
-      // Chart 2: System Distribution (Bar Chart)
+      // Chart 2: System Distribution (Bar Chart with DataLabels)
       const ctxSystems = document.getElementById('chartSystemDistribution');
       if (ctxSystems) {
         if (chartSystemDistributionInstance) chartSystemDistributionInstance.destroy();
@@ -2355,22 +2479,36 @@
             labels: Object.keys(sysData),
             datasets: [{
               label: 'จำนวนคำขอ',
-              data: Object.values(sysData),
+              data: Object.values(sysData).map(v => Number(v || 0)),
               backgroundColor: '#7a0c1e',
-              borderRadius: 6
+              borderRadius: 6,
+              maxBarThickness: 64
             }]
           },
           options: {
             responsive: true,
             maintainAspectRatio: false,
+            layout: { padding: { top: 22 } },
             plugins: {
-              legend: { display: false }
+              legend: { display: false },
+              datalabels: {
+                display: true,
+                anchor: 'end',
+                align: 'top',
+                offset: 2,
+                color: '#7a0c1e',
+                font: { family: 'Sarabun', weight: 'bold', size: 12 },
+                formatter: function(value) {
+                  return value.toLocaleString('th-TH');
+                }
+              }
             },
             scales: {
-              y: { beginAtZero: true, ticks: { stepSize: 1, font: { family: 'Sarabun' } } },
+              y: { beginAtZero: true, grace: '15%', ticks: { stepSize: 1, font: { family: 'Sarabun' } } },
               x: { ticks: { font: { family: 'Sarabun', size: 11 } } }
             }
-          }
+          },
+          plugins: hasDataLabels ? [ChartDataLabels] : []
         });
       }
     }
@@ -2381,6 +2519,7 @@
       if (!tbody) return;
 
       const filtered = adminTickets.filter(t => {
+        const parsed = parseTicketDetailAndImages(t.issue_detail);
         const matchStatus = (currentAdminFilterStatus === 'all' || t.status.includes(currentAdminFilterStatus));
         const matchCollege = (currentAdminFilterCollege === 'all' || t.college_name === currentAdminFilterCollege);
         const matchSearch = (!currentAdminSearch ||
@@ -2388,7 +2527,7 @@
           t.reporter_name.toLowerCase().includes(currentAdminSearch) ||
           (t.reporter_contact && t.reporter_contact.toLowerCase().includes(currentAdminSearch)) ||
           t.system_name.toLowerCase().includes(currentAdminSearch) ||
-          t.issue_detail.toLowerCase().includes(currentAdminSearch)
+          parsed.text.toLowerCase().includes(currentAdminSearch)
         );
         return matchStatus && matchCollege && matchSearch;
       });
@@ -2398,8 +2537,8 @@
       if (filtered.length === 0) {
         tbody.innerHTML = `
           <tr>
-            <td colspan="9" class="text-center py-5 text-muted">
-              <i class="fas fa-inbox fs-3 mb-2 d-block"></i>
+            <td colspan="9" class="text-center py-4 text-muted">
+              <i class="fas fa-inbox fs-4 mb-1 d-block"></i>
               ไม่พบคำขอที่ตรงกับเงื่อนไขการค้นหา
             </td>
           </tr>
@@ -2414,28 +2553,43 @@
         if (t.status.includes('ดำเนิน')) { badgeClass = 'status-progress'; icon = 'fa-arrows-rotate'; }
         else if (t.status.includes('แก้ไข') || t.status.includes('เสร็จ')) { badgeClass = 'status-resolved'; icon = 'fa-check'; }
 
+        const parsed = parseTicketDetailAndImages(t.issue_detail);
+        const shortDate = formatShortDateTime(t.created_at);
+
+        let imgBadgesHtml = '';
+        if (parsed.images.length > 0) {
+          imgBadgesHtml = `<div class="d-inline-flex align-items-center gap-1 ms-1">` +
+            parsed.images.map((imgSrc, idx) =>
+              `<img src="${imgSrc}" alt="รูปที่ ${idx+1}" title="คลิกเพื่อดูรูปขยาย (${idx+1}/${parsed.images.length})" onclick="openImageLightbox(this.src)" style="width:24px;height:24px;object-fit:cover;border-radius:4px;border:1px solid #fca5a5;cursor:pointer;">`
+            ).join('') +
+            `</div>`;
+        }
+
         html += `
           <tr>
-            <td><strong class="text-danger" style="font-family: monospace;">${t.ticket_id}</strong></td>
-            <td class="small text-muted">${t.created_at || '-'}</td>
-            <td><span class="badge bg-light text-dark border">${t.system_name || 'ทั่วไป'}</span></td>
-            <td class="small fw-semibold">${t.college_name || '-'}</td>
-            <td>
-              <div class="fw-semibold">${t.reporter_name || '-'}</div>
-              <small class="text-muted"><i class="fas fa-phone-volume me-1"></i>${t.reporter_contact || '-'}</small>
+            <td style="white-space: nowrap;"><strong class="text-danger" style="font-family: monospace; font-size: 0.82rem;">${t.ticket_id}</strong></td>
+            <td class="text-muted" style="white-space: nowrap; font-size: 0.78rem;">${shortDate}</td>
+            <td style="white-space: nowrap;"><span class="badge bg-light text-dark border" style="font-size: 0.76rem;">${t.system_name || 'ทั่วไป'}</span></td>
+            <td class="fw-semibold" style="font-size: 0.8rem; max-width: 180px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${t.college_name || '-'}">${t.college_name || '-'}</td>
+            <td style="white-space: nowrap;">
+              <span class="fw-semibold">${t.reporter_name || '-'}</span>
+              <span class="text-muted ms-1" style="font-size: 0.78rem;"><i class="fas fa-phone-volume me-1"></i>${t.reporter_contact || '-'}</span>
             </td>
             <td>
-              <div class="small fw-semibold text-dark">${t.issue_type || '-'}</div>
-              <div class="small text-muted" style="max-width: 260px; line-height: 1.4;">${t.issue_detail || '-'}</div>
+              <div class="d-flex align-items-center flex-wrap gap-1">
+                <span class="badge bg-danger-subtle text-danger" style="font-size: 0.7rem;">${t.issue_type || '-'}</span>
+                <span class="text-muted text-truncate" style="max-width: 210px; font-size: 0.8rem;" title="${parsed.text.replace(/"/g, '&quot;')}">${parsed.text}</span>
+                ${imgBadgesHtml}
+              </div>
             </td>
-            <td>
+            <td style="white-space: nowrap;">
               <span class="status-badge ${badgeClass}">
                 <i class="fas ${icon} me-1"></i>${t.status}
               </span>
             </td>
-            <td class="small text-muted" style="max-width: 180px;">${t.admin_notes || '<span class="text-black-50">-</span>'}</td>
-            <td class="text-center">
-              <button type="button" class="btn btn-outline-danger btn-sm rounded-pill px-3" onclick="openTicketActionModal('${t.ticket_id}')">
+            <td class="text-muted text-truncate" style="max-width: 150px; font-size: 0.79rem;" title="${(t.admin_notes || '').replace(/"/g, '&quot;')}">${t.admin_notes || '<span class="text-black-50">-</span>'}</td>
+            <td class="text-center" style="white-space: nowrap;">
+              <button type="button" class="btn btn-outline-danger btn-sm rounded-pill px-2 py-0" style="font-size: 0.76rem;" onclick="openTicketActionModal('${t.ticket_id}')">
                 <i class="fas fa-pen-to-square me-1"></i>จัดการ
               </button>
             </td>
@@ -2450,15 +2604,31 @@
       const t = adminTickets.find(item => item.ticket_id === ticketId);
       if (!t) return;
 
+      const parsed = parseTicketDetailAndImages(t.issue_detail);
+
       document.getElementById('actionTicketId').value = t.ticket_id;
       document.getElementById('actionTicketIdBadge').innerText = 'รหัสคำขอ: ' + t.ticket_id;
       document.getElementById('actionSystemName').innerText = t.system_name || 'ทั่วไป';
       document.getElementById('actionCollegeName').innerText = t.college_name || '-';
       document.getElementById('actionReporterName').innerText = t.reporter_name || '-';
       document.getElementById('actionContact').innerText = t.reporter_contact || '-';
-      document.getElementById('actionDetail').innerText = t.issue_detail || '-';
+      document.getElementById('actionDetail').innerText = parsed.text;
       document.getElementById('actionNewStatus').value = t.status || 'รอดำเนินการ';
       document.getElementById('actionAdminNotes').value = t.admin_notes || '';
+
+      const imgWrap = document.getElementById('actionImagesWrapper');
+      const imgGrid = document.getElementById('actionImagesGrid');
+      if (imgWrap && imgGrid) {
+        if (parsed.images.length > 0) {
+          imgWrap.style.display = 'block';
+          imgGrid.innerHTML = parsed.images.map((src, idx) =>
+            `<img src="${src}" alt="รูปที่ ${idx+1}" title="คลิกเพื่อดูรูปขนาดใหญ่" onclick="openImageLightbox(this.src)" style="width:64px;height:64px;object-fit:cover;border-radius:8px;border:1px solid #cbd5e1;cursor:pointer;">`
+          ).join('');
+        } else {
+          imgWrap.style.display = 'none';
+          imgGrid.innerHTML = '';
+        }
+      }
 
       const modal = new bootstrap.Modal(document.getElementById('ticketActionModal'));
       modal.show();
@@ -2537,15 +2707,17 @@
       csv += 'รหัสคำขอ,วันเวลาที่แจ้ง,ระบบงาน,วิทยาลัยต้นสังกัด,ผู้แจ้ง,ช่องทางติดต่อ,ประเภทปัญหา,รายละเอียดปัญหา,สถานะ,บันทึกการแก้ไข\n';
 
       adminTickets.forEach(t => {
+        const parsed = parseTicketDetailAndImages(t.issue_detail);
+        const detailExport = parsed.text + (parsed.images.length > 0 ? ` [แนบรูป ${parsed.images.length} รูป]` : '');
         const row = [
           `"${t.ticket_id || ''}"`,
-          `"${t.created_at || ''}"`,
+          `"${formatShortDateTime(t.created_at)}"`,
           `"${t.system_name || ''}"`,
           `"${t.college_name || ''}"`,
           `"${t.reporter_name || ''}"`,
           `"${t.reporter_contact || ''}"`,
           `"${t.issue_type || ''}"`,
-          `"${(t.issue_detail || '').replace(/"/g, '""')}"`,
+          `"${detailExport.replace(/"/g, '""')}"`,
           `"${t.status || ''}"`,
           `"${(t.admin_notes || '').replace(/"/g, '""')}"`
         ];
@@ -2726,12 +2898,24 @@
         const step2Color = (isProgress || isResolved) ? '#3b82f6' : '#cbd5e1';
         const step3Color = isResolved ? '#10b981' : '#cbd5e1';
 
+        const parsed = parseTicketDetailAndImages(t.issue_detail);
+        const shortDate = formatShortDateTime(t.created_at);
+
+        let userImagesHtml = '';
+        if (parsed.images.length > 0) {
+          userImagesHtml = `<div class="col-12 mt-1"><span class="text-muted d-block mb-1">รูปภาพประกอบที่แจ้ง (${parsed.images.length} รูป):</span><div class="d-flex flex-wrap gap-2">` +
+            parsed.images.map((src, idx) =>
+              `<img src="${src}" alt="รูปที่ ${idx+1}" onclick="openImageLightbox(this.src)" style="width:52px;height:52px;object-fit:cover;border-radius:6px;border:1px solid #cbd5e1;cursor:pointer;" title="คลิกเพื่อดูรูปขนาดใหญ่">`
+            ).join('') +
+            `</div></div>`;
+        }
+
         html += `
           <div class="p-3 mb-3 rounded-3 border bg-white shadow-sm">
             <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 pb-2 mb-2 border-bottom">
               <div>
                 <span class="fw-bold text-danger" style="font-family: monospace; font-size: 0.95rem;">${t.ticket_id}</span>
-                <span class="text-muted small ms-2"><i class="far fa-clock me-1"></i>${t.created_at || '-'}</span>
+                <span class="text-muted small ms-2"><i class="far fa-clock me-1"></i>${shortDate}</span>
               </div>
               <span class="status-badge ${badgeClass}">${st}</span>
             </div>
@@ -2760,8 +2944,9 @@
               </div>
               <div class="col-12">
                 <span class="text-muted">ปัญหาที่แจ้ง (${t.issue_type || '-'}):</span>
-                <span class="text-dark">${t.issue_detail || '-'}</span>
+                <span class="text-dark">${parsed.text}</span>
               </div>
+              ${userImagesHtml}
             </div>
 
             ${t.admin_notes ? `
@@ -2782,8 +2967,105 @@
       resultsEl.innerHTML = html;
     }
 
+    let selectedTicketImages = [];
+
+    function compressImageToDataUrl(file, maxDim, quality) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          const img = new Image();
+          img.onload = function() {
+            let w = img.width;
+            let h = img.height;
+            if (w > maxDim || h > maxDim) {
+              if (w > h) {
+                h = Math.round((h * maxDim) / w);
+                w = maxDim;
+              } else {
+                w = Math.round((w * maxDim) / h);
+                h = maxDim;
+              }
+            }
+            const canvas = document.createElement('canvas');
+            canvas.width = w;
+            canvas.height = h;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, w, h);
+            ctx.drawImage(img, 0, 0, w, h);
+            let dataUrl = canvas.toDataURL('image/jpeg', quality);
+            // Ensure each image is under ~8500 chars so 5 images fit in a 50,000-char Google Sheet cell
+            if (dataUrl.length > 8500) {
+              dataUrl = canvas.toDataURL('image/jpeg', 0.38);
+            }
+            resolve(dataUrl);
+          };
+          img.onerror = reject;
+          img.src = e.target.result;
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+    }
+
+    async function handleTicketImagesSelect(event) {
+      const input = event.target;
+      const files = Array.from(input.files || []);
+      if (files.length === 0) return;
+
+      if (selectedTicketImages.length + files.length > 5) {
+        alert('สามารถแนบรูปภาพประกอบได้สูงสุดไม่เกิน 5 รูปค่ะ');
+      }
+
+      const remainingSlots = Math.max(0, 5 - selectedTicketImages.length);
+      const filesToProcess = files.slice(0, remainingSlots);
+
+      for (const file of filesToProcess) {
+        if (!file.type.startsWith('image/')) continue;
+        try {
+          const compressed = await compressImageToDataUrl(file, 480, 0.52);
+          selectedTicketImages.push(compressed);
+        } catch (err) {
+          console.warn('Image compression error:', err);
+        }
+      }
+
+      input.value = '';
+      renderTicketImagesPreview();
+    }
+
+    function removeTicketImage(index) {
+      selectedTicketImages.splice(index, 1);
+      renderTicketImagesPreview();
+    }
+
+    function renderTicketImagesPreview() {
+      const grid = document.getElementById('ticketImagePreviewGrid');
+      const badge = document.getElementById('ticketImageCountBadge');
+      if (badge) {
+        badge.innerText = `${selectedTicketImages.length} / 5 รูป`;
+      }
+      if (!grid) return;
+
+      if (selectedTicketImages.length === 0) {
+        grid.innerHTML = '';
+        return;
+      }
+
+      grid.innerHTML = selectedTicketImages.map((src, idx) => `
+        <div class="position-relative" style="width: 64px; height: 64px;">
+          <img src="${src}" alt="Preview ${idx+1}" onclick="openImageLightbox(this.src)" style="width: 64px; height: 64px; object-fit: cover; border-radius: 8px; border: 1px solid #fca5a5; cursor: pointer;" title="คลิกเพื่อดูรูปขนาดใหญ่">
+          <button type="button" onclick="removeTicketImage(${idx})" title="ลบรูปนี้" style="position: absolute; top: -6px; right: -6px; width: 20px; height: 20px; border-radius: 50%; background: #dc2626; color: #fff; border: none; font-size: 11px; line-height: 1; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">
+            &times;
+          </button>
+        </div>
+      `).join('');
+    }
+
     function openTicketModal(systemName, initialTab) {
       switchTicketModalTab(initialTab || 'create');
+      selectedTicketImages = [];
+      renderTicketImagesPreview();
 
       const loadTimeInput = document.getElementById('formLoadTime');
       if (loadTimeInput) loadTimeInput.value = Date.now();
@@ -2860,25 +3142,30 @@
         submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>กำลังส่งข้อมูล...';
       }
 
-      // Preserve leading '0' in phone numbers when writing to Google Sheets
       const cleanContact = normalizeContactPhone(payload.reporter_contact || '');
-      const sheetSafeContact = /^0\d+$/.test(cleanContact) ? ("'" + cleanContact) : cleanContact;
-
-      const queryParams = new URLSearchParams();
-      queryParams.set('action', 'create_ticket');
-      queryParams.set('system_name', payload.system_name || 'ทั่วไป');
-      queryParams.set('college_name', payload.college_name || '');
-      queryParams.set('reporter_name', payload.reporter_name || '');
-      queryParams.set('reporter_contact', sheetSafeContact);
-      queryParams.set('issue_type', payload.issue_type || 'ทั่วไป');
-      queryParams.set('issue_detail', payload.issue_detail || '');
-      queryParams.set('math_answer', payload.math_answer || '');
-      queryParams.set('math_expected', payload.math_expected || '');
+      let finalIssueDetail = String(payload.issue_detail || '').trim();
+      if (selectedTicketImages.length > 0) {
+        finalIssueDetail += '\n[[IMAGES:' + JSON.stringify(selectedTicketImages) + ']]';
+      }
 
       const apiUrl = getGasUrl();
-      fetch(apiUrl + '?' + queryParams.toString(), {
-        method: 'GET',
-        mode: 'cors'
+      const postBody = {
+        action: 'create_ticket',
+        system_name: payload.system_name || 'ทั่วไป',
+        college_name: payload.college_name || '',
+        reporter_name: payload.reporter_name || '',
+        reporter_contact: cleanContact,
+        issue_type: payload.issue_type || 'ทั่วไป',
+        issue_detail: finalIssueDetail,
+        math_answer: payload.math_answer || '',
+        math_expected: payload.math_expected || ''
+      };
+
+      fetch(apiUrl, {
+        method: 'POST',
+        mode: 'cors',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify(postBody)
       })
       .then(res => res.json())
       .then(data => {
@@ -2889,9 +3176,9 @@
         }
       })
       .catch(err => {
-        console.warn('Network call error, storing locally:', err);
+        console.warn('POST fallback notice:', err);
         const fallbackId = 'TK-' + new Date().toISOString().slice(0,10).replace(/-/g,'') + '-' + Math.floor(100 + Math.random() * 900);
-        saveTicketLocally(payload, fallbackId);
+        saveTicketLocally(postBody, fallbackId);
         handleTicketSuccess({ status: 'success', ticketId: fallbackId, message: 'บันทึกในคิวสำรองเรียบร้อย' }, form, submitBtn);
       });
     }
@@ -2901,6 +3188,9 @@
         submitBtn.disabled = false;
         submitBtn.innerHTML = '<i class="fas fa-paper-plane me-1"></i>ส่งเรื่องแจ้งปัญหา';
       }
+
+      selectedTicketImages = [];
+      renderTicketImagesPreview();
 
       try {
         if (res && res.ticketId) {
