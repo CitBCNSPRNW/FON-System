@@ -733,7 +733,7 @@
       <div class="container-xl">
         <div class="d-flex align-items-center justify-content-between mb-4">
           <div>
-            <h4 style="font-weight: 700; color: var(--fon-primary-dark); margin-bottom: 4px;">
+            <h4 id="systemsSectionHeading" style="font-weight: 700; color: var(--fon-primary-dark); margin-bottom: 4px;">
               <i class="fas fa-cubes-stacked me-2 text-danger"></i>สารบบระบบงานสารสนเทศ (16 ระบบ)
             </h4>
             <p class="text-muted small mb-0">คลิก "เข้าสู่ระบบ" เพื่อเปิดใช้งาน คลิก "ล็อกอิน" เพื่อดูข้อมูลเข้าใช้งาน หรือคลิก "คู่มือ" เพื่อศึกษาขั้นตอน</p>
@@ -1603,11 +1603,11 @@
     // Central Spreadsheet ID & Target Links
     const SPREADSHEET_ID = '1XwQuHsav9w_0w24tL1e6Sczsb0gUhZ6-hfBCAtxE98M';
     const SPREADSHEET_URL = 'https://docs.google.com/spreadsheets/d/' + SPREADSHEET_ID + '/edit';
-    const DEFAULT_GAS_URL = 'https://script.google.com/macros/s/16Fr6K4M5IgT-WY3jSIK985Q3yELai5QGPad4wwAWl4uYRcjUkcQK9FKs/exec';
+    const DEFAULT_GAS_URL = 'https://script.google.com/macros/s/AKfycbwmB_dqt-aFA3gtnXFlmDdM1m59mQeyPA1ztlHkF96BgDwVWmipzOAb1mCyRrl3-QdT/exec';
 
     function getGasUrl() {
       const stored = localStorage.getItem('FON_GAS_URL');
-      if (stored && stored.trim().startsWith('https://script.google.com/macros/s/')) {
+      if (stored && stored.trim().startsWith('https://script.google.com/macros/s/AKfycb')) {
         return stored.trim();
       }
       return DEFAULT_GAS_URL;
@@ -1862,6 +1862,7 @@
           if (data && data.systems && data.systems.length > 0) {
             handleDataResponse(data);
             updateLiveStatusBadge(true, data.systems.length);
+            syncLocalTicketsToSheet();
           } else {
             throw new Error('Empty or invalid data');
           }
@@ -1883,9 +1884,39 @@
       allSystems = data.systems || [];
       allCategories = data.categories || [];
       
+      // Auto-register any custom category_id found in systems
+      const existingCatIds = new Set(allCategories.map(c => c.category_id));
+      allSystems.forEach(sys => {
+        if (sys.category_id && !existingCatIds.has(sys.category_id)) {
+          existingCatIds.add(sys.category_id);
+          allCategories.push({
+            category_id: sys.category_id,
+            category_name: sys.category_id,
+            icon: 'fas fa-tag',
+            order_no: 99
+          });
+        }
+      });
+
       const countBadge = document.getElementById('totalSystemsBadge');
       if (countBadge) {
-        countBadge.innerText = allSystems.length + ' ระบบงาน';
+        countBadge.innerHTML = `<i class="fas fa-layer-group me-1"></i>${allSystems.length} ระบบงาน`;
+      }
+      const sectionHeading = document.getElementById('systemsSectionHeading');
+      if (sectionHeading) {
+        sectionHeading.innerHTML = `<i class="fas fa-cubes-stacked me-2 text-danger"></i>สารบบระบบงานสารสนเทศ (${allSystems.length} ระบบ)`;
+      }
+
+      // Dynamically update ticketSystemSelect dropdown with live systems
+      const sysSelect = document.getElementById('ticketSystemSelect');
+      if (sysSelect && allSystems.length > 0) {
+        let optHtml = '<option value="" selected disabled>-- เลือกระบบงานที่ต้องการแจ้งปัญหา --</option>';
+        allSystems.forEach(s => {
+          const label = (s.id ? s.id + '. ' : '') + s.name;
+          optHtml += `<option value="${s.name}">${label}</option>`;
+        });
+        optHtml += '<option value="ระบบอื่นๆ / ทั่วไป">อื่นๆ / ภาพรวมพอร์ทัล</option>';
+        sysSelect.innerHTML = optHtml;
       }
 
       renderCategoryChips(allCategories);
@@ -2369,22 +2400,23 @@
         submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>กำลังบันทึก...';
       }
 
-      const payload = {
+      const queryParams = new URLSearchParams({
         action: 'update_ticket',
         ticket_id: ticketId,
         new_status: newStatus,
         admin_notes: adminNotes
-      };
+      });
 
       const apiUrl = getGasUrl();
-      fetch(apiUrl, {
-        method: 'POST',
-        mode: 'no-cors',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      }).then(() => {
+      fetch(apiUrl + '?' + queryParams.toString(), {
+        method: 'GET',
+        mode: 'cors'
+      })
+      .then(res => res.json())
+      .then(() => {
         finishActionUpdate(ticketId, newStatus, adminNotes, submitBtn);
-      }).catch(() => {
+      })
+      .catch(() => {
         finishActionUpdate(ticketId, newStatus, adminNotes, submitBtn);
       });
     }
@@ -2558,24 +2590,35 @@
         submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>กำลังส่งข้อมูลลงชีต...';
       }
 
-      const ticketId = 'TK-' + new Date().toISOString().slice(0,10).replace(/-/g,'') + '-' + Math.floor(100 + Math.random() * 900);
-      payload.action = 'create_ticket';
-      payload.ticketId = ticketId;
+      const queryParams = new URLSearchParams();
+      queryParams.set('action', 'create_ticket');
+      queryParams.set('system_name', payload.system_name || 'ทั่วไป');
+      queryParams.set('college_name', payload.college_name || '');
+      queryParams.set('reporter_name', payload.reporter_name || '');
+      queryParams.set('reporter_contact', payload.reporter_contact || '');
+      queryParams.set('issue_type', payload.issue_type || 'ทั่วไป');
+      queryParams.set('issue_detail', payload.issue_detail || '');
+      queryParams.set('math_answer', payload.math_answer || '');
+      queryParams.set('math_expected', payload.math_expected || '');
 
       const apiUrl = getGasUrl();
-      fetch(apiUrl, {
-        method: 'POST',
-        mode: 'no-cors',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+      fetch(apiUrl + '?' + queryParams.toString(), {
+        method: 'GET',
+        mode: 'cors'
       })
-      .then(() => {
-        handleTicketSuccess({ status: 'success', ticketId: ticketId, message: 'บันทึกเรียบร้อย' }, form, submitBtn);
+      .then(res => res.json())
+      .then(data => {
+        if (data && data.status === 'success') {
+          handleTicketSuccess(data, form, submitBtn);
+        } else {
+          throw new Error((data && data.message) || 'เกิดข้อผิดพลาดในการบันทึก');
+        }
       })
       .catch(err => {
         console.warn('Network call error, storing locally:', err);
-        saveTicketLocally(payload, ticketId);
-        handleTicketSuccess({ status: 'success', ticketId: ticketId, message: 'บันทึกในคิวสำรองเรียบร้อย' }, form, submitBtn);
+        const fallbackId = 'TK-' + new Date().toISOString().slice(0,10).replace(/-/g,'') + '-' + Math.floor(100 + Math.random() * 900);
+        saveTicketLocally(payload, fallbackId);
+        handleTicketSuccess({ status: 'success', ticketId: fallbackId, message: 'บันทึกในคิวสำรองเรียบร้อย' }, form, submitBtn);
       });
     }
 
@@ -2602,6 +2645,30 @@
         payload.ticketId = ticketId;
         tickets.push(payload);
         localStorage.setItem('fon_saved_tickets', JSON.stringify(tickets));
+      } catch (e) {
+        // Ignore
+      }
+    }
+
+    function syncLocalTicketsToSheet() {
+      try {
+        const queued = JSON.parse(localStorage.getItem('fon_saved_tickets') || '[]');
+        if (!queued || queued.length === 0) return;
+
+        const apiUrl = getGasUrl();
+        localStorage.removeItem('fon_saved_tickets');
+
+        queued.forEach(item => {
+          const qp = new URLSearchParams();
+          qp.set('action', 'create_ticket');
+          qp.set('system_name', item.system_name || 'ทั่วไป');
+          qp.set('college_name', item.college_name || '');
+          qp.set('reporter_name', item.reporter_name || '');
+          qp.set('reporter_contact', item.reporter_contact || '');
+          qp.set('issue_type', item.issue_type || 'ทั่วไป');
+          qp.set('issue_detail', item.issue_detail || '');
+          fetch(apiUrl + '?' + qp.toString(), { method: 'GET', mode: 'cors' }).catch(() => {});
+        });
       } catch (e) {
         // Ignore
       }
