@@ -680,12 +680,6 @@
           <span class="badge rounded-pill bg-light text-danger border px-3 py-2 d-none d-lg-inline-block" id="totalSystemsBadge" style="font-weight: 600; font-size: 0.82rem; border-color: #fecaca !important;">
             <i class="fas fa-layer-group me-1"></i>16 ระบบงาน
           </span>
-
-          <!-- Google Sheet Live Status Button -->
-          <button type="button" class="btn btn-sm rounded-pill px-3 py-1 text-muted border bg-white d-flex align-items-center gap-1" id="liveStatusBtn" onclick="openApiConfigModal()" title="ตรวจสอบหรือตั้งค่าการเชื่อมต่อ Google Sheets">
-            <span id="liveStatusDot" class="fas fa-circle text-warning" style="font-size: 8px;"></span>
-            <span id="liveStatusText" style="font-size: 0.78rem;">เช็คสถานะชีต</span>
-          </button>
         </div>
       </div>
     </nav>
@@ -822,8 +816,7 @@
             <small class="text-muted">Faculty of Nursing, Praboromarajchanok Institute (FON-PBRI)</small>
           </div>
           <div class="text-md-end">
-            <small class="text-muted d-block">Version v1.3.0 | Build 2026.11.17</small>
-            <small class="text-muted">ฐานข้อมูล Google Sheets &amp; เผยแพร่ผ่าน GitHub Pages</small>
+            <small class="text-muted d-block">Version v1.4.0 | Build 2026.11.17</small>
           </div>
         </div>
       </div>
@@ -1575,8 +1568,7 @@
       <div class="spinner-border text-danger mb-3" role="status" style="width: 3rem; height: 3rem; border-width: 0.25em; color: var(--fon-primary) !important;">
         <span class="visually-hidden">Loading...</span>
       </div>
-      <h6 id="fonLoadingTitle" style="font-weight: 700; color: var(--fon-text-main); margin-bottom: 6px;">กำลังโหลดข้อมูลระบบสารสนเทศ...</h6>
-      <p id="fonLoadingSub" style="font-size: 0.82rem; color: var(--fon-text-muted); margin-bottom: 0;">กรุณารอสักครู่ คณะพยาบาลศาสตร์ สถาบันพระบรมราชชนก</p>
+      <h6 id="fonLoadingTitle" style="font-weight: 700; color: var(--fon-text-main); margin-bottom: 0;">กำลังเตรียมข้อมูล...</h6>
     </div>
   </div>
 
@@ -1850,29 +1842,31 @@
      * Fetch Portal Data
      */
     function loadPortalData() {
-      showLoading(true, 'กำลังโหลดรายชื่อระบบสารสนเทศจาก Google Sheets...');
+      showLoading(true, 'กำลังเตรียมข้อมูล...');
       const apiUrl = getGasUrl();
 
-      fetch(apiUrl + '?action=get_portal_data', { method: 'GET', mode: 'cors' })
-        .then(res => {
-          if (!res.ok) throw new Error('HTTP Status ' + res.status);
-          return res.json();
-        })
-        .then(data => {
-          if (data && data.systems && data.systems.length > 0) {
-            handleDataResponse(data);
-            updateLiveStatusBadge(true, data.systems.length);
-            syncLocalTicketsToSheet();
-          } else {
-            throw new Error('Empty or invalid data');
-          }
-          showLoading(false);
-        })
-        .catch(err => {
-          console.warn('API call failed or endpoint not ready, using bundled seed data:', err);
-          handleDataResponse(getFallbackData());
-          updateLiveStatusBadge(false);
-          showLoading(false);
+      fetch(apiUrl + '?action=init_database&_t=' + Date.now(), { method: 'GET', mode: 'cors' })
+        .catch(() => {})
+        .finally(() => {
+          fetch(apiUrl + '?action=get_portal_data&_t=' + Date.now(), { method: 'GET', mode: 'cors' })
+            .then(res => {
+              if (!res.ok) throw new Error('HTTP Status ' + res.status);
+              return res.json();
+            })
+            .then(data => {
+              if (data && data.systems && data.systems.length > 0) {
+                handleDataResponse(data);
+                syncLocalTicketsToSheet();
+              } else {
+                throw new Error('Empty or invalid data');
+              }
+              showLoading(false);
+            })
+            .catch(err => {
+              console.warn('API call failed or endpoint not ready, using bundled seed data:', err);
+              handleDataResponse(getFallbackData());
+              showLoading(false);
+            });
         });
     }
 
@@ -2101,8 +2095,8 @@
       const pin = (pinInput ? pinInput.value : '').trim();
       const verifyBtn = document.getElementById('adminVerifyBtn');
 
-      if (!email) {
-        alert('กรุณากรอกอีเมลประจำตัวผู้ดูแลระบบ');
+      if (!email || !pin) {
+        alert('กรุณากรอกอีเมลประจำตัวผู้ดูแลระบบและรหัสความปลอดภัย (PIN)');
         return;
       }
 
@@ -2111,30 +2105,43 @@
         verifyBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>กำลังตรวจสอบสิทธิ์...';
       }
 
-      const admin = ADMIN_WHITELIST_CLIENT.find(a => a.email.toLowerCase() === email);
+      const apiUrl = getGasUrl();
+      const verifyUrl = apiUrl + '?action=verify_admin&email=' + encodeURIComponent(email) + '&pin=' + encodeURIComponent(pin) + '&_t=' + Date.now();
 
-      setTimeout(() => {
-        if (verifyBtn) {
-          verifyBtn.disabled = false;
-          verifyBtn.innerHTML = '<i class="fas fa-arrow-right-to-bracket me-1"></i>เข้าสู่ระบบจัดการคำขอ &amp; แดชบอร์ด';
-        }
+      fetch(verifyUrl, { method: 'GET', mode: 'cors' })
+        .then(res => res.json())
+        .then(data => {
+          if (verifyBtn) {
+            verifyBtn.disabled = false;
+            verifyBtn.innerHTML = '<i class="fas fa-arrow-right-to-bracket me-1"></i>เข้าสู่ระบบจัดการคำขอ &amp; แดชบอร์ด';
+          }
 
-        // Check PIN (Default FON@2026 or 1323)
-        if (admin && (pin === 'FON@2026' || pin === '1323' || pin === 'admin' || pin === '123456')) {
-          sessionStorage.setItem('fon_admin_session', JSON.stringify(admin));
+          if (data && data.authorized) {
+            const adminObj = {
+              email: data.email || email,
+              name: data.name || 'ผู้ดูแลระบบ',
+              org: data.org || 'คณะพยาบาลศาสตร์',
+              role: data.role || 'admin'
+            };
+            sessionStorage.setItem('fon_admin_session', JSON.stringify(adminObj));
 
-          const authModalEl = document.getElementById('adminAuthModal');
-          const modal = bootstrap.Modal.getInstance(authModalEl);
-          if (modal) modal.hide();
+            const authModalEl = document.getElementById('adminAuthModal');
+            const modal = bootstrap.Modal.getInstance(authModalEl);
+            if (modal) modal.hide();
 
-          showToast(`ยินดีต้อนรับคุณ ${admin.name}`);
-          
-          // SWITCH VIEW TO ADMIN COMMAND CENTER
-          switchView('admin');
-        } else {
-          alert('❌ ข้อมูลการเข้าใช้งานไม่ถูกต้อง\n\nกรุณาตรวจสอบอีเมลและรหัสความปลอดภัย (Security PIN) อีกครั้ง หรือติดต่อผู้ดูแลระบบกลางทาง LINE ค่ะ');
-        }
-      }, 550);
+            showToast(`ยินดีต้อนรับคุณ ${adminObj.name}`);
+            switchView('admin');
+          } else {
+            alert('❌ ' + ((data && data.message) || 'ข้อมูลการเข้าใช้งานไม่ถูกต้อง กรุณาตรวจสอบอีเมลและรหัส PIN ในชีต Admins อีกครั้ง'));
+          }
+        })
+        .catch(err => {
+          if (verifyBtn) {
+            verifyBtn.disabled = false;
+            verifyBtn.innerHTML = '<i class="fas fa-arrow-right-to-bracket me-1"></i>เข้าสู่ระบบจัดการคำขอ &amp; แดชบอร์ด';
+          }
+          alert('❌ ไม่สามารถเชื่อมต่อตรวจสอบสิทธิ์ได้ในขณะนี้ กรุณาลองใหม่อีกครั้ง');
+        });
     }
 
     function checkExistingAdminSession() {
@@ -2189,14 +2196,14 @@
       checkExistingAdminSession();
       const apiUrl = getGasUrl();
 
-      fetch(apiUrl + '?action=get_tickets', { mode: 'cors' })
+      fetch(apiUrl + '?action=get_tickets&_t=' + Date.now(), { mode: 'cors' })
         .then(res => res.json())
         .then(data => handleAdminTicketsResponse(data))
         .catch(() => handleAdminTicketsResponse(getSampleAdminData()));
     }
 
     function refreshAdminData() {
-      showToast('กำลังซิงค์ข้อมูลล่าสุดจาก Google Sheets...');
+      showToast('กำลังเตรียมข้อมูล...');
       loadAdminTickets();
     }
 
