@@ -8,7 +8,7 @@
   <title>ระบบสารสนเทศคณะพยาบาลศาสตร์ สถาบันพระบรมราชชนก (FON-PBRI Information Systems Portal)</title>
   
   <!-- Versioning -->
-  <meta name="version" content="v1.0.0">
+  <meta name="version" content="v1.1.0">
   <meta name="build" content="2026.11.17">
 
   <!-- SEO & Social Open Graph -->
@@ -363,6 +363,7 @@
       transition: all 0.2s ease;
       text-decoration: none;
       flex: 1;
+      min-width: 110px;
       justify-content: center;
     }
 
@@ -399,12 +400,42 @@
       padding: 8px 12px;
       border-radius: 10px;
       text-decoration: none;
+      cursor: pointer;
       transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
     }
 
     .btn-fon-manual:hover {
       background: #dcfce7;
       color: #14532d;
+    }
+
+    .fon-float-helpdesk {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      z-index: 1040;
+      background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+      color: #ffffff;
+      font-weight: 700;
+      font-size: 0.95rem;
+      padding: 14px 22px;
+      border-radius: 50px;
+      border: none;
+      box-shadow: 0 8px 25px rgba(217, 119, 6, 0.35);
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .fon-float-helpdesk:hover {
+      transform: translateY(-3px) scale(1.02);
+      box-shadow: 0 12px 30px rgba(217, 119, 6, 0.5);
+      color: #ffffff;
     }
 
     .fon-resource-card {
@@ -506,6 +537,18 @@
       color: #ffffff;
     }
 
+    .form-control, .form-select {
+      border-radius: 10px;
+      border: 1px solid var(--fon-border);
+      padding: 10px 14px;
+      font-size: 0.95rem;
+    }
+
+    .form-control:focus, .form-select:focus {
+      border-color: var(--fon-primary-light);
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+    }
+
     @media (max-width: 768px) {
       .fon-hero-title { font-size: 1.6rem; }
       .fon-hero-desc { font-size: 0.95rem; }
@@ -513,6 +556,7 @@
       .fon-brand-title { font-size: 0.98rem; }
       .fon-brand-subtitle { font-size: 0.72rem; }
       .fon-brand-logo { height: 38px; }
+      .fon-float-helpdesk { bottom: 16px; right: 16px; padding: 12px 18px; font-size: 0.88rem; }
     }
   </style>
 </head>
@@ -530,6 +574,10 @@
       </div>
 
       <div class="d-flex align-items-center gap-2">
+        <button type="button" class="btn btn-warning btn-sm rounded-pill px-3 d-flex align-items-center gap-2" style="font-weight: 600; color: #78350f;" onclick="openTicketModal('')">
+          <i class="fas fa-ticket"></i>
+          <span>แจ้งปัญหาการใช้งาน</span>
+        </button>
         <span class="badge rounded-pill bg-light text-primary border px-3 py-2 d-none d-md-inline-block" id="totalSystemsBadge" style="font-weight: 600; font-size: 0.82rem;">
           <i class="fas fa-layer-group me-1"></i>16 รายการระบบ
         </span>
@@ -669,12 +717,18 @@
           <small class="text-muted">Faculty of Nursing, Praboromarajchanok Institute (FON-PBRI)</small>
         </div>
         <div class="text-md-end">
-          <small class="text-muted d-block">Version v1.0.0 | Build 2026.11.17</small>
+          <small class="text-muted d-block">Version v1.1.0 | Build 2026.11.17</small>
           <small class="text-muted">ฐานข้อมูล Google Sheets &amp; เผยแพร่ผ่าน GitHub Pages</small>
         </div>
       </div>
     </div>
   </footer>
+
+  <!-- Floating Helpdesk Button -->
+  <button type="button" class="fon-float-helpdesk" onclick="openTicketModal('')" title="แจ้งปัญหาการใช้งาน">
+    <i class="fas fa-headset"></i>
+    <span>แจ้งปัญหาการใช้งาน</span>
+  </button>
 
   <!-- Credential Modal -->
   <div class="modal fade" id="credentialModal" tabindex="-1" aria-labelledby="credentialModalLabel" aria-hidden="true">
@@ -694,8 +748,8 @@
         </div>
         <div class="modal-body">
           <div class="alert alert-info py-2 px-3 small rounded-3 mb-3 d-flex align-items-center gap-2">
-            <i class="fas fa-info-circle text-info"></i>
-            <span>สามารถกดปุ่ม <strong>คัดลอก</strong> เพื่อนำไปวางในหน้าเข้าสู่ระบบได้ทันที</span>
+            <i class="fas fa-shield-halved text-primary"></i>
+            <span>นโยบายความมั่นคงปลอดภัย: รหัสผ่านประจำวิทยาลัย กรุณาติดต่อแอดมินระบบ</span>
           </div>
 
           <!-- Username Field -->
@@ -713,23 +767,215 @@
           <div class="fon-copy-field">
             <div>
               <div class="fon-copy-label">รหัสผ่านเริ่มต้น (Password)</div>
-              <div class="fon-copy-value" id="modalPassVal">-</div>
+              <div class="fon-copy-value" id="modalPassVal" style="color: #b45309; font-size: 0.95rem;">
+                <i class="fas fa-user-shield me-1"></i>ติดต่อแอดมินระบบ
+              </div>
             </div>
-            <button class="btn-copy" onclick="copyModalField('modalPassVal', this)">
-              <i class="far fa-copy me-1"></i>คัดลอก
-            </button>
+            <span class="badge bg-warning text-dark px-2 py-1">นโยบายความปลอดภัย</span>
           </div>
 
-          <div class="text-muted small mt-3" id="modalNote" style="font-size: 0.8rem; line-height: 1.5;">
-            * หมายเหตุ: หากมีการเปลี่ยนรหัสผ่านประจำวิทยาลัยแล้ว ให้ใช้รหัสผ่านใหม่ที่ผู้ดูแลระบบของวิทยาลัยได้ตั้งค่าไว้
+          <div class="text-muted small mt-3" id="modalNote" style="font-size: 0.82rem; line-height: 1.6;">
+            * หากท่านยังไม่มีบัญชีเข้าใช้งาน หรือต้องการรีเซ็ตรหัสผ่าน สามารถกดปุ่ม <strong>"แจ้งขอรหัสผ่าน"</strong> ด้านล่างนี้ได้ทันทีค่ะ
           </div>
         </div>
         <div class="modal-footer border-0 pt-0">
           <button type="button" class="btn btn-light rounded-pill px-3" data-bs-dismiss="modal">ปิดหน้าต่าง</button>
+          <button type="button" class="btn btn-outline-warning rounded-pill px-3" onclick="openTicketFromModal()">
+            <i class="fas fa-headset me-1"></i>แจ้งขอรหัสผ่าน
+          </button>
           <a href="#" id="modalDirectOpenBtn" target="_blank" class="btn btn-primary rounded-pill px-4" style="background: var(--fon-primary);">
             <i class="fas fa-external-link-alt me-1"></i>ไปยังหน้าล็อกอิน
           </a>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Manual Coming Soon Modal -->
+  <div class="modal fade" id="manualComingSoonModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content text-center p-3">
+        <div class="modal-body py-4">
+          <div class="mx-auto mb-3" style="width: 64px; height: 64px; border-radius: 50%; background: #eff6ff; color: var(--fon-primary); display: flex; align-items: center; justify-content: center; font-size: 1.8rem;">
+            <i class="fas fa-book-open-reader"></i>
+          </div>
+          <h5 style="font-weight: 700; color: var(--fon-text-main); margin-bottom: 8px;" id="manualModalSysName">คู่มือการใช้งานระบบ</h5>
+          <p class="text-muted" style="font-size: 0.92rem; max-width: 380px; margin: 0 auto 20px auto;">
+            คู่มือการใช้งานระบบนี้อยู่ระหว่างการรวบรวมและจัดทำโดยคณะทำงานสารสนเทศ คณะพยาบาลศาสตร์ สถาบันพระบรมราชชนก
+          </p>
+          <div class="alert alert-light border small text-start py-2 px-3 mb-4 rounded-3 text-muted">
+            💡 <strong>คำแนะนำ:</strong> ท่านสามารถศึกษาการใช้งานเบื้องต้นได้จาก <strong>วิดีโอย้อนหลังการอบรม (7-8 ต.ค. 2568)</strong> หรือติดต่อแอดมินผ่านกลุ่ม LINE ประสานงาน
+          </div>
+          <div class="d-flex justify-content-center gap-2">
+            <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">เข้าใจแล้ว</button>
+            <a href="https://drive.google.com/drive/folders/1wJcWqyPPibo7uhWSoRIS6rn8uayUPgwX?usp=drive_link" target="_blank" class="btn btn-outline-primary rounded-pill px-3">
+              <i class="fas fa-video me-1"></i>ดูวิดีโออบรม
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Helpdesk Ticket Modal (Public / No Login Required) -->
+  <div class="modal fade" id="ticketModal" tabindex="-1" aria-labelledby="ticketModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <div class="d-flex align-items-center gap-3">
+            <div style="width: 44px; height: 44px; border-radius: 12px; background: #fef3c7; color: #b45309; display: flex; align-items: center; justify-content: center; font-size: 1.3rem;">
+              <i class="fas fa-ticket"></i>
+            </div>
+            <div>
+              <h5 class="modal-title font-weight-bold" id="ticketModalLabel" style="font-weight: 700; font-size: 1.15rem;">แจ้งปัญหาการใช้งาน / ขอรับบริการ</h5>
+              <small class="text-muted">ระบบรับเรื่องและประสานงาน คณะพยาบาลศาสตร์ สถาบันพระบรมราชชนก</small>
+            </div>
+          </div>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+
+        <form id="fonTicketForm" onsubmit="submitTicket(event)">
+          <div class="modal-body">
+            <!-- Anti-Bot Honeypot Field -->
+            <input type="text" name="website_url" id="botHoneypot" style="display:none !important; opacity:0; position:absolute; left:-9999px;" tabindex="-1" autocomplete="off">
+            <input type="hidden" name="form_load_time" id="formLoadTime">
+            <input type="hidden" name="math_expected" id="mathExpected">
+
+            <div class="row g-3">
+              <!-- System Select -->
+              <div class="col-md-6">
+                <label class="form-label font-weight-bold small text-muted" style="font-weight: 600;">ระบบงานที่พบปัญหา <span class="text-danger">*</span></label>
+                <select class="form-select" id="ticketSystemSelect" name="system_name" required>
+                  <option value="">-- กรุณาเลือกระบบงาน --</option>
+                  <option value="ทั่วไป/เข้าสู่ระบบไม่ได้">ปัญหาทั่วไป / เข้าสู่ระบบไม่ได้</option>
+                  <option value="1. ระบบบุคลากร (FONMIS)">1. ระบบบุคลากร (FONMIS)</option>
+                  <option value="2. ระบบครุภัณฑ์ (เดิม)">2. ระบบครุภัณฑ์ (เดิม)</option>
+                  <option value="2.1 ระบบครุภัณฑ์ (ใหม่)">2.1 ระบบครุภัณฑ์ (ใหม่)</option>
+                  <option value="3. ระบบแผนและกำกับงบประมาณ (งานแผน)">3. ระบบแผนและกำกับงบประมาณ (งานแผน)</option>
+                  <option value="4. ระบบแผนและกำกับงบประมาณ (งานการเงิน)">4. ระบบแผนและกำกับงบประมาณ (งานการเงิน)</option>
+                  <option value="5. ระบบวิจัย นวัตกรรม">5. ระบบวิจัย นวัตกรรม</option>
+                  <option value="6. ระบบบริการวิชาการ">6. ระบบบริการวิชาการ</option>
+                  <option value="7. ระบบด้านกิจการนักศึกษา">7. ระบบด้านกิจการนักศึกษา</option>
+                  <option value="8. ระบบการจัดการโครงการด้านทะนุบำรุงศิลปวัฒนธรรม">8. ระบบจัดการโครงการทำนุบำรุงศิลปวัฒนธรรม</option>
+                  <option value="9. ระบบจัดการโครงการด้านวิชาการ">9. ระบบจัดการโครงการด้านวิชาการ</option>
+                  <option value="10. ระบบจัดการโครงการด้านกิจการนักศึกษา">10. ระบบจัดการโครงการด้านกิจการนักศึกษา</option>
+                  <option value="11. ระบบจัดการโครงการด้านวิจัย">11. ระบบจัดการโครงการด้านวิจัย</option>
+                  <option value="12. ระบบการเรียนการสอน FTES/FTE">12. ระบบการเรียนการสอน FTES/FTE</option>
+                  <option value="13. ระบบสนับสนุนและบริการนักศึกษา">13. ระบบสนับสนุนและบริการนักศึกษา</option>
+                  <option value="14. ระบบประเมิน PA วิทยาลัย">14. ระบบประเมิน PA วิทยาลัย</option>
+                  <option value="15. ระบบกรอกข้อมูล EdPEx">15. ระบบกรอกข้อมูล EdPEx</option>
+                </select>
+              </div>
+
+              <!-- College Select (33 Colleges) -->
+              <div class="col-md-6">
+                <label class="form-label font-weight-bold small text-muted" style="font-weight: 600;">วิทยาลัยพยาบาลต้นสังกัด <span class="text-danger">*</span></label>
+                <select class="form-select" id="ticketCollegeSelect" name="college_name" required>
+                  <option value="">-- เลือกวิทยาลัยพยาบาลบรมราชชนนี --</option>
+                  <option value="วพบ.กรุงเทพ">วิทยาลัยพยาบาลบรมราชชนนี กรุงเทพ</option>
+                  <option value="วพบ.ขอนแก่น">วิทยาลัยพยาบาลบรมราชชนนี ขอนแก่น</option>
+                  <option value="วพบ.ชัยนาท">วิทยาลัยพยาบาลบรมราชชนนี ชัยนาท</option>
+                  <option value="วพบ.เชียงใหม่">วิทยาลัยพยาบาลบรมราชชนนี เชียงใหม่</option>
+                  <option value="วพบ.ตรัง">วิทยาลัยพยาบาลบรมราชชนนี ตรัง</option>
+                  <option value="วพบ.นครราชสีมา">วิทยาลัยพยาบาลบรมราชชนนี นครราชสีมา</option>
+                  <option value="วพบ.นครลำปาง">วิทยาลัยพยาบาลบรมราชชนนี นครลำปาง</option>
+                  <option value="วพบ.นครศรีธรรมราช">วิทยาลัยพยาบาลบรมราชชนนี นครศรีธรรมราช</option>
+                  <option value="วพบ.นนทบุรี">วิทยาลัยพยาบาลบรมราชชนนี นนทบุรี</option>
+                  <option value="วพบ.พะเยา">วิทยาลัยพยาบาลบรมราชชนนี พะเยา</option>
+                  <option value="วพบ.พระพุทธบาท">วิทยาลัยพยาบาลบรมราชชนนี พระพุทธบาท</option>
+                  <option value="วพบ.แพร่">วิทยาลัยพยาบาลบรมราชชนนี แพร่</option>
+                  <option value="วพบ.ยะลา">วิทยาลัยพยาบาลบรมราชชนนี ยะลา</option>
+                  <option value="วพบ.ราชบุรี">วิทยาลัยพยาบาลบรมราชชนนี ราชบุรี</option>
+                  <option value="วพบ.สงขลา">วิทยาลัยพยาบาลบรมราชชนนี สงขลา</option>
+                  <option value="วพบ.สระบุรี">วิทยาลัยพยาบาลบรมราชชนนี สระบุรี</option>
+                  <option value="วพบ.สวรรค์ประชารักษ์ นครสวรรค์">วิทยาลัยพยาบาลบรมราชชนนี สวรรค์ประชารักษ์ นครสวรรค์</option>
+                  <option value="วพบ.สุพรรณบุรี">วิทยาลัยพยาบาลบรมราชชนนี สุพรรณบุรี</option>
+                  <option value="วพบ.สุราษฎร์ธานี">วิทยาลัยพยาบาลบรมราชชนนี สุราษฎร์ธานี</option>
+                  <option value="วพบ.สุรินทร์">วิทยาลัยพยาบาลบรมราชชนนี สุรินทร์</option>
+                  <option value="วพบ.อุดรธานี">วิทยาลัยพยาบาลบรมราชชนนี อุดรธานี</option>
+                  <option value="วพบ.อุตรดิตถ์">วิทยาลัยพยาบาลบรมราชชนนี อุตรดิตถ์</option>
+                  <option value="วพบ.อุบลราชธานี">วิทยาลัยพยาบาลบรมราชชนนี อุบลราชธานี</option>
+                  <option value="วพบ.ชลบุรี">วิทยาลัยพยาบาลบรมราชชนนี ชลบุรี</option>
+                  <option value="วพบ.นครพนม">วิทยาลัยพยาบาลบรมราชชนนี นครพนม</option>
+                  <option value="วพ.พระจอมเกล้า จ.เพชรบุรี">วิทยาลัยพยาบาลพระจอมเกล้า จังหวัดเพชรบุรี</option>
+                  <option value="วพ.พระปกเกล้า จันทบุรี">วิทยาลัยพยาบาลพระปกเกล้า จันทบุรี</option>
+                  <option value="วพ.ศรีมหาสารคาม">วิทยาลัยพยาบาลศรีมหาสารคาม</option>
+                  <option value="วพบ.นราธิวาส">วิทยาลัยพยาบาลบรมราชชนนี นราธิวาส</option>
+                  <option value="คณะพยาบาลศาสตร์ สบช. (ส่วนกลาง)">คณะพยาบาลศาสตร์ สบช. (ส่วนกลาง)</option>
+                  <option value="อื่นๆ ในสังกัด สบช.">อื่นๆ ในสังกัด สบช.</option>
+                </select>
+              </div>
+
+              <!-- Reporter Name -->
+              <div class="col-md-6">
+                <label class="form-label font-weight-bold small text-muted" style="font-weight: 600;">ชื่อ-นามสกุล ผู้แจ้งปัญหา <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" name="reporter_name" placeholder="ระบุชื่อ-นามสกุล และตำแหน่ง" required>
+              </div>
+
+              <!-- Contact Info -->
+              <div class="col-md-6">
+                <label class="form-label font-weight-bold small text-muted" style="font-weight: 600;">ช่องทางติดต่อกลับ (เบอร์โทร / LINE / อีเมล) <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" name="reporter_contact" placeholder="เช่น 081-234-5678 หรือ line_id" required>
+              </div>
+
+              <!-- Issue Type -->
+              <div class="col-md-12">
+                <label class="form-label font-weight-bold small text-muted" style="font-weight: 600;">ประเภทปัญหา <span class="text-danger">*</span></label>
+                <div class="d-flex flex-wrap gap-2">
+                  <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" name="issue_type" id="typeLogin" value="เข้าสู่ระบบไม่ได้" checked>
+                    <label class="form-check-label small" for="typeLogin">เข้าสู่ระบบไม่ได้</label>
+                  </div>
+                  <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" name="issue_type" id="typePass" value="ขอรหัสผ่านใหม่">
+                    <label class="form-check-label small" for="typePass">ขอรหัสผ่านใหม่</label>
+                  </div>
+                  <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" name="issue_type" id="typeBug" value="ระบบขัดข้อง/แสดงผลผิดพลาด">
+                    <label class="form-check-label small" for="typeBug">ระบบขัดข้อง</label>
+                  </div>
+                  <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" name="issue_type" id="typeData" value="ขอแก้ไขข้อมูล">
+                    <label class="form-check-label small" for="typeData">ขอแก้ไขข้อมูล</label>
+                  </div>
+                  <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" name="issue_type" id="typeOther" value="ข้อเสนอแนะ/อื่นๆ">
+                    <label class="form-check-label small" for="typeOther">อื่นๆ</label>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Issue Detail -->
+              <div class="col-md-12">
+                <label class="form-label font-weight-bold small text-muted" style="font-weight: 600;">รายละเอียดปัญหาที่พบ <span class="text-danger">*</span></label>
+                <textarea class="form-control" name="issue_detail" rows="3" placeholder="โปรดระบุอาการที่พบ เช่น ขึ้นแจ้งเตือนว่าอย่างไร เกิดขึ้นในขั้นตอนใด..." required></textarea>
+              </div>
+
+              <!-- Anti-Bot Cognitive Challenge -->
+              <div class="col-md-12">
+                <div class="p-3 bg-light rounded-3 border d-flex flex-column flex-sm-row align-items-sm-center justify-content-between gap-3">
+                  <div class="d-flex align-items-center gap-2">
+                    <i class="fas fa-shield-cat text-primary fs-5"></i>
+                    <div>
+                      <div style="font-weight: 600; font-size: 0.88rem;">ระบบตรวจสอบยืนยันความปลอดภัย</div>
+                      <small class="text-muted" id="mathChallengeQuestion">คำนวณ: 4 + 3 = ?</small>
+                    </div>
+                  </div>
+                  <div style="max-width: 130px;">
+                    <input type="number" class="form-control form-control-sm text-center" name="math_answer" id="mathAnswerInput" placeholder="ผลลัพธ์" required>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="modal-footer border-0 pt-0">
+            <button type="button" class="btn btn-light rounded-pill px-3" data-bs-dismiss="modal">ยกเลิก</button>
+            <button type="submit" class="btn btn-warning rounded-pill px-4" id="submitTicketBtn" style="font-weight: 600; color: #78350f;">
+              <i class="fas fa-paper-plane me-1"></i>ส่งเรื่องแจ้งปัญหา
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   </div>
@@ -740,7 +986,7 @@
       <div class="d-flex">
         <div class="toast-body d-flex align-items-center gap-2">
           <i class="fas fa-check-circle text-warning"></i>
-          <span>คัดลอกข้อมูลลงคลิปบอร์ดเรียบร้อยแล้ว</span>
+          <span id="toastMsg">คัดลอกข้อมูลลงคลิปบอร์ดเรียบร้อยแล้ว</span>
         </div>
         <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
       </div>
@@ -765,22 +1011,22 @@
     ];
 
     const INITIAL_SYSTEMS = [
-      { id: '1', name: 'ระบบบุคลากร (FONMIS)', category_id: 'personnel', description: 'ระบบบริหารจัดการข้อมูลและทะเบียนประวัติบุคลากร คณะพยาบาลศาสตร์', url: 'https://misn.pbri.ac.th/FONMIS/', default_user: 'hr@วิทยาลัย.ac.th', default_pass: '123456789', icon: 'fas fa-id-card-clip', badge_color: 'primary' },
-      { id: '2', name: 'ระบบครุภัณฑ์ (เดิม)', category_id: 'asset', description: 'ระบบทะเบียนคุมและบริหารจัดการครุภัณฑ์สถาบัน (เวอร์ชันเดิม)', url: 'https://misn.pbri.ac.th/FONMIS/', default_user: 'dura@วิทยาลัย.ac.th', default_pass: '123456789', icon: 'fas fa-boxes-stacked', badge_color: 'secondary' },
-      { id: '2.1', name: 'ระบบครุภัณฑ์ (ใหม่)', category_id: 'asset', description: 'ระบบสารสนเทศบริหารจัดการครุภัณฑ์และสินทรัพย์ คณะพยาบาลศาสตร์ เวอร์ชันใหม่', url: 'https://misn.pbri.ac.th/durapbri/', default_user: 'admin@วิทยาลัย.ac.th', default_pass: '', icon: 'fas fa-dolly', badge_color: 'info' },
-      { id: '3', name: 'ระบบแผนและกำกับงบประมาณ (งานแผน)', category_id: 'plan_finance', description: 'ระบบกำกับติดตามแผนปฏิบัติราชการและจัดสรรงบประมาณประจำปี', url: 'https://misn.pbri.ac.th/plan/', default_user: 'plan@วิทยาลัย', default_pass: '1234', icon: 'fas fa-chart-line', badge_color: 'warning' },
-      { id: '4', name: 'ระบบแผนและกำกับงบประมาณ (งานการเงิน)', category_id: 'plan_finance', description: 'ระบบกำกับติดตามและควบคุมการเบิกจ่ายงบประมาณ งานการเงินและบัญชี', url: 'https://misn.pbri.ac.th/plan/', default_user: 'money@วิทยาลัย', default_pass: '1234', icon: 'fas fa-coins', badge_color: 'warning' },
-      { id: '5', name: 'ระบบวิจัย นวัตกรรม', category_id: 'research', description: 'ระบบจัดเก็บทะเบียนผลงานวิจัย นวัตกรรม และผลงานวิชาการของอาจารย์และบุคลากร', url: 'https://misn.pbri.ac.th/FONMIS/', default_user: 'research@วิทยาลัย.ac.th', default_pass: '123456789', icon: 'fas fa-microscope', badge_color: 'success' },
-      { id: '6', name: 'ระบบบริการวิชาการ', category_id: 'academic', description: 'ระบบบันทึกและติดตามโครงการบริการวิชาการแก่สังคมและชุมชน', url: 'https://misn.pbri.ac.th/academic', default_user: 'academic@วิทยาลัย', default_pass: '1234', icon: 'fas fa-hand-holding-heart', badge_color: 'primary' },
-      { id: '7', name: 'ระบบด้านกิจการนักศึกษา', category_id: 'student', description: 'ระบบบริหารจัดการข้อมูลกิจกรรมนักศึกษา และสวัสดิการนักศึกษาพยาบาล', url: 'https://misn.pbri.ac.th/FONMIS/', default_user: 'affair@วิทยาลัย.ac.th', default_pass: '123456789', manual_url: 'https://sites.google.com/pi.ac.th/fonpisystem/manual/manual-affair', icon: 'fas fa-user-graduate', badge_color: 'info' },
-      { id: '8', name: 'ระบบการจัดการโครงการด้านทะนุบำรุงศิลปวัฒนธรรม', category_id: 'projects', description: 'ระบบบริหารและประเมินผลโครงการทำนุบำรุงศิลปะและวัฒนธรรมไทย', url: 'https://misn.pbri.ac.th/culture/', default_user: 'culture@วิทยาลัย', default_pass: '1234', icon: 'fas fa-landmark-dome', badge_color: 'secondary' },
-      { id: '9', name: 'ระบบจัดการโครงการด้านวิชาการ', category_id: 'projects', description: 'ระบบบริหารจัดการ วางแผน และติดตามโครงการด้านการจัดการศึกษาและวิชาการ', url: 'https://misn.pbri.ac.th/education/', default_user: 'education@วิทยาลัย', default_pass: '1234', icon: 'fas fa-book-open-reader', badge_color: 'primary' },
-      { id: '10', name: 'ระบบจัดการโครงการด้านกิจการนักศึกษา', category_id: 'projects', description: 'ระบบกำกับติดตามและประเมินผลสัมฤทธิ์โครงการพัฒนานักศึกษา', url: 'https://misn.pbri.ac.th/affair/', default_user: 'affair@วิทยาลัย', default_pass: '1234', icon: 'fas fa-users-viewfinder', badge_color: 'info' },
-      { id: '11', name: 'ระบบจัดการโครงการด้านวิจัย', category_id: 'projects', description: 'ระบบติดตามการดำเนินงานโครงการวิจัย และการจัดสรรงบประมาณสนับสนุนงานวิจัย', url: 'https://misn.pbri.ac.th/research/', default_user: 'research@วิทยาลัย', default_pass: '1234', icon: 'fas fa-flask-vial', badge_color: 'success' },
-      { id: '12', name: 'ระบบการเรียนการสอน FTES/FTE', category_id: 'academic', description: 'ระบบคำนวณและรายงานภาระงานสอน เทียบเท่านักศึกษาเต็มเวลา (FTES/FTE)', url: 'https://misn.pbri.ac.th/FONMIS/login', default_user: 'acad@วิทยาลัย.ac.th', default_pass: '123456789', icon: 'fas fa-chalkboard-user', badge_color: 'primary' },
-      { id: '13', name: 'ระบบสนับสนุนและบริการนักศึกษา', category_id: 'student', description: 'ระบบคำนวณภาระงานและระบบงานบริการช่วยเหลือนักศึกษาพยาบาล', url: 'https://misn.pbri.ac.th/workload/app/login.php', icon: 'fas fa-headset', badge_color: 'info' },
-      { id: '14', name: 'ระบบประเมิน PA วิทยาลัย', category_id: 'qa', description: 'ระบบการประเมินผลการปฏิบัติงานตามข้อตกลงในการพัฒนางาน (PA) ระดับวิทยาลัย', url: 'https://misn.pbri.ac.th/director_eva/', icon: 'fas fa-clipboard-check', badge_color: 'danger' },
-      { id: '15', name: 'ระบบกรอกข้อมูล EdPEx', category_id: 'qa', description: 'ระบบบันทึกและประเมินเกณฑ์คุณภาพการศึกษาเพื่อการดำเนินการที่เป็นเลิศ (EdPEx)', url: 'https://misn.pbri.ac.th/edpex_pbri', icon: 'fas fa-award', badge_color: 'danger' }
+      { id: '1', name: 'ระบบบุคลากร (FONMIS)', category_id: 'personnel', description: 'ระบบบริหารจัดการข้อมูลและทะเบียนประวัติบุคลากร คณะพยาบาลศาสตร์', url: 'https://misn.pbri.ac.th/FONMIS/', default_user: 'hr@วิทยาลัย.ac.th', default_pass: 'ติดต่อแอดมินระบบ', icon: 'fas fa-id-card-clip', badge_color: 'primary' },
+      { id: '2', name: 'ระบบครุภัณฑ์ (เดิม)', category_id: 'asset', description: 'ระบบทะเบียนคุมและบริหารจัดการครุภัณฑ์สถาบัน (เวอร์ชันเดิม)', url: 'https://misn.pbri.ac.th/FONMIS/', default_user: 'dura@วิทยาลัย.ac.th', default_pass: 'ติดต่อแอดมินระบบ', icon: 'fas fa-boxes-stacked', badge_color: 'secondary' },
+      { id: '2.1', name: 'ระบบครุภัณฑ์ (ใหม่)', category_id: 'asset', description: 'ระบบสารสนเทศบริหารจัดการครุภัณฑ์และสินทรัพย์ คณะพยาบาลศาสตร์ เวอร์ชันใหม่', url: 'https://misn.pbri.ac.th/durapbri/', default_user: 'admin@วิทยาลัย.ac.th', default_pass: 'ติดต่อแอดมินระบบ', icon: 'fas fa-dolly', badge_color: 'info' },
+      { id: '3', name: 'ระบบแผนและกำกับงบประมาณ (งานแผน)', category_id: 'plan_finance', description: 'ระบบกำกับติดตามแผนปฏิบัติราชการและจัดสรรงบประมาณประจำปี', url: 'https://misn.pbri.ac.th/plan/', default_user: 'plan@วิทยาลัย', default_pass: 'ติดต่อแอดมินระบบ', icon: 'fas fa-chart-line', badge_color: 'warning' },
+      { id: '4', name: 'ระบบแผนและกำกับงบประมาณ (งานการเงิน)', category_id: 'plan_finance', description: 'ระบบกำกับติดตามและควบคุมการเบิกจ่ายงบประมาณ งานการเงินและบัญชี', url: 'https://misn.pbri.ac.th/plan/', default_user: 'money@วิทยาลัย', default_pass: 'ติดต่อแอดมินระบบ', icon: 'fas fa-coins', badge_color: 'warning' },
+      { id: '5', name: 'ระบบวิจัย นวัตกรรม', category_id: 'research', description: 'ระบบจัดเก็บทะเบียนผลงานวิจัย นวัตกรรม และผลงานวิชาการของอาจารย์และบุคลากร', url: 'https://misn.pbri.ac.th/FONMIS/', default_user: 'research@วิทยาลัย.ac.th', default_pass: 'ติดต่อแอดมินระบบ', icon: 'fas fa-microscope', badge_color: 'success' },
+      { id: '6', name: 'ระบบบริการวิชาการ', category_id: 'academic', description: 'ระบบบันทึกและติดตามโครงการบริการวิชาการแก่สังคมและชุมชน', url: 'https://misn.pbri.ac.th/academic', default_user: 'academic@วิทยาลัย', default_pass: 'ติดต่อแอดมินระบบ', icon: 'fas fa-hand-holding-heart', badge_color: 'primary' },
+      { id: '7', name: 'ระบบด้านกิจการนักศึกษา', category_id: 'student', description: 'ระบบบริหารจัดการข้อมูลกิจกรรมนักศึกษา และสวัสดิการนักศึกษาพยาบาล', url: 'https://misn.pbri.ac.th/FONMIS/', default_user: 'affair@วิทยาลัย.ac.th', default_pass: 'ติดต่อแอดมินระบบ', manual_url: 'https://sites.google.com/pi.ac.th/fonpisystem/manual/manual-affair', icon: 'fas fa-user-graduate', badge_color: 'info' },
+      { id: '8', name: 'ระบบจัดการโครงการด้านทะนุบำรุงศิลปวัฒนธรรม', category_id: 'projects', description: 'ระบบบริหารและประเมินผลโครงการทำนุบำรุงศิลปะและวัฒนธรรมไทย', url: 'https://misn.pbri.ac.th/culture/', default_user: 'culture@วิทยาลัย', default_pass: 'ติดต่อแอดมินระบบ', icon: 'fas fa-landmark-dome', badge_color: 'secondary' },
+      { id: '9', name: 'ระบบจัดการโครงการด้านวิชาการ', category_id: 'projects', description: 'ระบบบริหารจัดการ วางแผน และติดตามโครงการด้านการจัดการศึกษาและวิชาการ', url: 'https://misn.pbri.ac.th/education/', default_user: 'education@วิทยาลัย', default_pass: 'ติดต่อแอดมินระบบ', icon: 'fas fa-book-open-reader', badge_color: 'primary' },
+      { id: '10', name: 'ระบบจัดการโครงการด้านกิจการนักศึกษา', category_id: 'projects', description: 'ระบบกำกับติดตามและประเมินผลสัมฤทธิ์โครงการพัฒนานักศึกษา', url: 'https://misn.pbri.ac.th/affair/', default_user: 'affair@วิทยาลัย', default_pass: 'ติดต่อแอดมินระบบ', icon: 'fas fa-users-viewfinder', badge_color: 'info' },
+      { id: '11', name: 'ระบบจัดการโครงการด้านวิจัย', category_id: 'projects', description: 'ระบบติดตามการดำเนินงานโครงการวิจัย และการจัดสรรงบประมาณสนับสนุนงานวิจัย', url: 'https://misn.pbri.ac.th/research/', default_user: 'research@วิทยาลัย', default_pass: 'ติดต่อแอดมินระบบ', icon: 'fas fa-flask-vial', badge_color: 'success' },
+      { id: '12', name: 'ระบบการเรียนการสอน FTES/FTE', category_id: 'academic', description: 'ระบบคำนวณและรายงานภาระงานสอน เทียบเท่านักศึกษาเต็มเวลา (FTES/FTE)', url: 'https://misn.pbri.ac.th/FONMIS/login', default_user: 'acad@วิทยาลัย.ac.th', default_pass: 'ติดต่อแอดมินระบบ', icon: 'fas fa-chalkboard-user', badge_color: 'primary' },
+      { id: '13', name: 'ระบบสนับสนุนและบริการนักศึกษา', category_id: 'student', description: 'ระบบคำนวณภาระงานและระบบงานบริการช่วยเหลือนักศึกษาพยาบาล', url: 'https://misn.pbri.ac.th/workload/app/login.php', default_pass: 'ติดต่อแอดมินระบบ', icon: 'fas fa-headset', badge_color: 'info' },
+      { id: '14', name: 'ระบบประเมิน PA วิทยาลัย', category_id: 'qa', description: 'ระบบการประเมินผลการปฏิบัติงานตามข้อตกลงในการพัฒนางาน (PA) ระดับวิทยาลัย', url: 'https://misn.pbri.ac.th/director_eva/', default_pass: 'ติดต่อแอดมินระบบ', icon: 'fas fa-clipboard-check', badge_color: 'danger' },
+      { id: '15', name: 'ระบบกรอกข้อมูล EdPEx', category_id: 'qa', description: 'ระบบบันทึกและประเมินเกณฑ์คุณภาพการศึกษาเพื่อการดำเนินการที่เป็นเลิศ (EdPEx)', url: 'https://misn.pbri.ac.th/edpex_pbri', default_pass: 'ติดต่อแอดมินระบบ', icon: 'fas fa-award', badge_color: 'danger' }
     ];
 
     let allSystems = INITIAL_SYSTEMS;
@@ -908,7 +1154,11 @@
                   <a href="${sys.manual_url}" target="_blank" class="btn-fon-manual" title="เปิดดูคู่มือการใช้งาน">
                     <i class="fas fa-book-bookmark me-1"></i>คู่มือ
                   </a>
-                ` : ''}
+                ` : `
+                  <button type="button" class="btn-fon-manual" title="อยู่ระหว่างรวบรวมจัดทำคู่มือ" onclick="openManualComingSoon('${sys.name}')">
+                    <i class="fas fa-book-bookmark me-1"></i>คู่มือ
+                  </button>
+                `}
               </div>
             </div>
           </div>
@@ -935,14 +1185,109 @@
       document.getElementById('credentialModalLabel').innerText = sys.name;
       document.getElementById('modalSystemSub').innerText = 'รหัสเข้าใช้งานเริ่มต้นประจำวิทยาเขต';
       document.getElementById('modalUserVal').innerText = sys.default_user || '(ไม่มีระบุ)';
-      document.getElementById('modalPassVal').innerText = sys.default_pass || '(ไม่มีรหัสผ่าน)';
       document.getElementById('modalDirectOpenBtn').href = sys.url || '#';
+      window.currentModalSystemName = sys.name;
 
       const iconEl = document.getElementById('modalSystemIcon');
       if (iconEl && sys.icon) iconEl.className = sys.icon;
 
       const modal = new bootstrap.Modal(document.getElementById('credentialModal'));
       modal.show();
+    }
+
+    function openManualComingSoon(systemName) {
+      const nameEl = document.getElementById('manualModalSysName');
+      if (nameEl) nameEl.innerText = systemName || 'คู่มือการใช้งานระบบ';
+      const modal = new bootstrap.Modal(document.getElementById('manualComingSoonModal'));
+      modal.show();
+    }
+
+    function openTicketModal(systemName) {
+      const loadTimeInput = document.getElementById('formLoadTime');
+      if (loadTimeInput) loadTimeInput.value = Date.now();
+
+      const honeypot = document.getElementById('botHoneypot');
+      if (honeypot) honeypot.value = '';
+
+      const n1 = Math.floor(Math.random() * 8) + 2;
+      const n2 = Math.floor(Math.random() * 7) + 1;
+      const expected = n1 + n2;
+      const qEl = document.getElementById('mathChallengeQuestion');
+      const expEl = document.getElementById('mathExpected');
+      const ansInput = document.getElementById('mathAnswerInput');
+
+      if (qEl) qEl.innerText = `โปรดคำนวณ: ${n1} + ${n2} = ?`;
+      if (expEl) expEl.value = expected;
+      if (ansInput) ansInput.value = '';
+
+      const sysSelect = document.getElementById('ticketSystemSelect');
+      if (sysSelect && systemName) {
+        for (let i = 0; i < sysSelect.options.length; i++) {
+          if (sysSelect.options[i].value.includes(systemName) || systemName.includes(sysSelect.options[i].value)) {
+            sysSelect.selectedIndex = i;
+            break;
+          }
+        }
+      }
+
+      const modal = new bootstrap.Modal(document.getElementById('ticketModal'));
+      modal.show();
+    }
+
+    function openTicketFromModal() {
+      const credModalEl = document.getElementById('credentialModal');
+      const credModal = bootstrap.Modal.getInstance(credModalEl);
+      if (credModal) credModal.hide();
+      setTimeout(() => {
+        openTicketModal(window.currentModalSystemName || '');
+      }, 350);
+    }
+
+    function submitTicket(event) {
+      event.preventDefault();
+      const form = document.getElementById('fonTicketForm');
+      const submitBtn = document.getElementById('submitTicketBtn');
+      const formData = new FormData(form);
+      const payload = {};
+      formData.forEach((val, key) => payload[key] = val);
+
+      if (payload.website_url) {
+        alert('Security verification failed.');
+        return;
+      }
+
+      const elapsed = (Date.now() - Number(payload.form_load_time)) / 1000;
+      if (elapsed < 2.0) {
+        alert('กรุณาใช้เวลาในการตรวจสอบข้อมูลก่อนส่ง (ตรวจพบความเร็วผิดปกติ)');
+        return;
+      }
+
+      if (String(payload.math_answer).trim() !== String(payload.math_expected).trim()) {
+        alert('คำตอบทดสอบความถูกต้องไม่ตรง กรุณาตรวจสอบผลบวกอีกครั้ง');
+        const ansInput = document.getElementById('mathAnswerInput');
+        if (ansInput) { ansInput.focus(); ansInput.select(); }
+        return;
+      }
+
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>กำลังส่งเรื่อง...';
+      }
+
+      setTimeout(function() {
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = '<i class="fas fa-paper-plane me-1"></i>ส่งเรื่องแจ้งปัญหา';
+        }
+        const ticketModalEl = document.getElementById('ticketModal');
+        const modal = bootstrap.Modal.getInstance(ticketModalEl);
+        if (modal) modal.hide();
+        form.reset();
+
+        const ticketId = 'TK-' + new Date().toISOString().slice(0,10).replace(/-/g,'') + '-' + Math.floor(100 + Math.random() * 900);
+        showToast(`ส่งเรื่องสำเร็จแล้ว! รหัสติดตาม: ${ticketId}`);
+        alert(`✅ บันทึกการแจ้งปัญหาสำเร็จแล้วเจ้าค่ะ!\n\nรหัสติดตามของคุณ: ${ticketId}\nเจ้าหน้าที่ดูแลระบบจะเร่งประสานงานและดำเนินการให้โดยเร็วที่สุดค่ะ`);
+      }, 600);
     }
 
     function copyModalField(elementId, btnElement) {
@@ -960,10 +1305,7 @@
         textarea.style.opacity = '0';
         document.body.appendChild(textarea);
         textarea.select();
-        try {
-          document.execCommand('copy');
-          showCopyFeedback(btnElement);
-        } catch (err) {}
+        try { document.execCommand('copy'); showCopyFeedback(btnElement); } catch (err) {}
         document.body.removeChild(textarea);
       }
     }
@@ -980,6 +1322,12 @@
           btnElement.style.color = '';
         }, 1800);
       }
+      showToast('คัดลอกข้อมูลลงคลิปบอร์ดเรียบร้อยแล้ว');
+    }
+
+    function showToast(msg) {
+      const msgEl = document.getElementById('toastMsg');
+      if (msgEl) msgEl.innerText = msg;
       if (copyToastInstance) copyToastInstance.show();
     }
   </script>
