@@ -1633,11 +1633,11 @@
     // Central Spreadsheet ID & Target Links
     const SPREADSHEET_ID = '1XwQuHsav9w_0w24tL1e6Sczsb0gUhZ6-hfBCAtxE98M';
     const SPREADSHEET_URL = 'https://docs.google.com/spreadsheets/d/' + SPREADSHEET_ID + '/edit';
-    const DEFAULT_GAS_URL = 'https://script.google.com/macros/s/AKfycbwmB_dqt-aFA3gtnXFlmDdM1m59mQeyPA1ztlHkF96BgDwVWmipzOAb1mCyRrl3-QdT/exec';
+    const DEFAULT_GAS_URL = 'https://script.google.com/macros/s/AKfycbyU4c1EtGgZf5dqZoaJHbOXe-VYJTWxWsvk7y0i6Kg3Si07Ki-97pVO2eAhHkN4Cvb_/exec';
 
     function getGasUrl() {
       const stored = localStorage.getItem('FON_GAS_URL');
-      if (stored && stored.trim().startsWith('https://script.google.com/macros/s/AKfycb')) {
+      if (stored && stored.trim().startsWith('https://script.google.com/macros/s/AKfycb') && !stored.includes('AKfycbwmB')) {
         return stored.trim();
       }
       return DEFAULT_GAS_URL;
@@ -1923,8 +1923,6 @@
             syncLocalTicketsToSheet();
           }
           showLoading(false);
-          // Background cache invalidation on GAS so next edit in Sheet is always ready
-          fetch(apiUrl + '?action=init_database&_t=' + Date.now(), { method: 'GET', mode: 'cors' }).catch(() => {});
         })
         .catch(err => {
           console.warn('Background sync notice:', err);
