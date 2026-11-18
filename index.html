@@ -597,7 +597,6 @@
       background: #ffffff;
       border: 1px solid var(--fon-border);
       border-radius: 16px;
-      overflow: hidden;
       box-shadow: var(--fon-shadow-sm);
     }
 
@@ -609,6 +608,69 @@
       font-size: 0.82rem;
       padding: 8px 10px;
       white-space: nowrap;
+    }
+
+    .th-filter-btn {
+      background: transparent;
+      border: 1px solid transparent;
+      border-radius: 6px;
+      padding: 3px 7px;
+      margin: -3px -7px;
+      color: #44403c;
+      font-weight: 600;
+      font-size: 0.82rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .th-filter-btn:hover {
+      background: #fee2e2;
+      color: var(--fon-primary);
+      border-color: #fecaca;
+    }
+
+    .th-filter-btn.active-filter {
+      background: #fef2f2;
+      color: var(--fon-primary);
+      border-color: #fca5a5;
+      box-shadow: 0 1px 2px rgba(122, 12, 30, 0.08);
+    }
+
+    .fon-page-btn {
+      border: 1px solid #e7e5e4;
+      background: #ffffff;
+      color: #44403c;
+      font-size: 0.78rem;
+      font-weight: 600;
+      min-width: 30px;
+      height: 30px;
+      padding: 0 8px;
+      border-radius: 6px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .fon-page-btn:hover:not(:disabled) {
+      background: #fef2f2;
+      border-color: #fca5a5;
+      color: var(--fon-primary);
+    }
+
+    .fon-page-btn.active {
+      background: var(--fon-primary);
+      border-color: var(--fon-primary);
+      color: #ffffff;
+    }
+
+    .fon-page-btn:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
     }
 
     .fon-table tbody td {
@@ -1002,16 +1064,29 @@
 
       <!-- Row 3: Ticket Management Grid & Filters -->
       <div class="fon-table-container p-4">
-        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+        <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-3">
           <div>
             <h5 class="fw-bold text-dark mb-1"><i class="fas fa-list-check me-2 text-danger"></i>ตารางจัดการคำขอและประสานงาน</h5>
-            <small class="text-muted">คลิกปุ่ม "จัดการ/อัปเดต" ที่แถวเพื่อปรับสถานะและบันทึกข้อความประสานงาน</small>
+            <small class="text-muted">คลิกที่หัวตาราง <b>วัน-เวลาแจ้ง</b>, <b>ระบบงาน</b> หรือ <b>สถานะ</b> เพื่อกรองข้อมูลเฉพาะเจาะจง</small>
           </div>
 
-          <!-- Filter Controls -->
+          <!-- Filter & Page Size Controls -->
           <div class="d-flex flex-wrap align-items-center gap-2">
+            <!-- Page Size Selector -->
+            <div class="d-flex align-items-center gap-1 small text-muted bg-light border rounded-2 px-2 py-1">
+              <span>แสดง</span>
+              <select class="form-select form-select-sm border-0 bg-transparent py-0 px-1 fw-bold text-dark" id="adminPageSizeSelect" style="width: auto; box-shadow: none; cursor: pointer;" onchange="handleAdminPageSizeChange(this.value)">
+                <option value="10" selected>10</option>
+                <option value="20">20</option>
+                <option value="30">30</option>
+                <option value="100">100</option>
+                <option value="all">ทั้งหมด</option>
+              </select>
+              <span>แถว</span>
+            </div>
+
             <!-- Search -->
-            <div style="max-width: 220px;">
+            <div style="max-width: 210px;">
               <input type="text" class="form-control form-control-sm" id="adminSearchInput" placeholder="ค้นหารหัส, ชื่อ, ปัญหา...">
             </div>
 
@@ -1024,24 +1099,103 @@
             </select>
 
             <!-- College Filter -->
-            <select class="form-select form-select-sm" id="adminCollegeFilter" style="width: auto; max-width: 200px;">
+            <select class="form-select form-select-sm" id="adminCollegeFilter" style="width: auto; max-width: 195px;">
               <option value="all">ทุกหน่วยงาน (31 แห่ง)</option>
             </select>
+
+            <!-- Reset All Filters Button -->
+            <button type="button" class="btn btn-outline-danger btn-sm rounded-pill px-2 py-1" id="resetAdminFiltersBtn" onclick="resetAllAdminTableFilters()" style="font-size: 0.76rem; display: none;" title="ล้างตัวกรองทั้งหมด">
+              <i class="fas fa-filter-circle-xmark me-1"></i>ล้างตัวกรอง
+            </button>
           </div>
         </div>
 
+        <!-- Active Filter Tags Bar -->
+        <div id="adminActiveFiltersBar" class="d-flex flex-wrap align-items-center gap-2 mb-2" style="display: none !important;"></div>
+
         <!-- Tickets Table -->
         <div class="table-responsive">
-          <table class="table table-hover fon-table align-middle">
+          <table class="table table-hover fon-table align-middle mb-0">
             <thead>
               <tr>
                 <th style="width: 115px;">รหัสคำขอ</th>
-                <th style="width: 115px;">วัน-เวลาแจ้ง</th>
-                <th>ระบบงาน</th>
+                <th style="width: 130px;">
+                  <div class="dropdown d-inline-block">
+                    <button type="button" class="th-filter-btn" id="thDateFilterBtn" data-bs-toggle="dropdown" data-bs-auto-close="outside" data-bs-popper-config='{"strategy":"fixed"}' title="คลิกเพื่อกรองตามวันที่ หรือช่วงวันที่">
+                      <span id="thDateFilterLabel">วัน-เวลาแจ้ง</span>
+                      <i class="fas fa-calendar-days text-danger" style="font-size: 0.74rem;"></i>
+                      <i class="fas fa-caret-down opacity-75" style="font-size: 0.7rem;"></i>
+                    </button>
+                    <div class="dropdown-menu p-3 shadow-lg border rounded-3" style="min-width: 285px; z-index: 1080;">
+                      <div class="fw-bold small mb-2" style="color: var(--fon-primary);">
+                        <i class="fas fa-calendar-check me-1"></i>ตัวกรองปฏิทิน (วัน-เวลาแจ้ง)
+                      </div>
+
+                      <!-- Single Date -->
+                      <div class="mb-2 pb-2 border-bottom">
+                        <label class="form-label small text-muted mb-1" style="font-size: 0.75rem; font-weight: 600;">เลือกเฉพาะวันที่ (1 วัน)</label>
+                        <input type="date" class="form-control form-control-sm" id="filterSingleDateInput" onchange="handleSingleDateChange(this.value)">
+                      </div>
+
+                      <!-- Date Range -->
+                      <div class="mb-2">
+                        <label class="form-label small text-muted mb-1" style="font-size: 0.75rem; font-weight: 600;">หรือ เลือกช่วงวันที่ (ตั้งแต่วันที่ - ถึงวันที่)</label>
+                        <div class="d-flex flex-column gap-1">
+                          <div class="d-flex align-items-center gap-2">
+                            <span class="small text-muted" style="min-width: 52px; font-size: 0.74rem;">ตั้งแต่วันที่:</span>
+                            <input type="date" class="form-control form-control-sm" id="filterDateStartInput" onchange="handleDateRangeChange()">
+                          </div>
+                          <div class="d-flex align-items-center gap-2">
+                            <span class="small text-muted" style="min-width: 52px; font-size: 0.74rem;">ถึงวันที่:</span>
+                            <input type="date" class="form-control form-control-sm" id="filterDateEndInput" onchange="handleDateRangeChange()">
+                          </div>
+                        </div>
+                      </div>
+
+                      <!-- Quick Presets & Clear -->
+                      <div class="d-flex flex-wrap gap-1 pt-2 border-top justify-content-between align-items-center">
+                        <div class="d-flex gap-1">
+                          <button type="button" class="btn btn-light btn-sm py-0 px-2 border" style="font-size: 0.72rem;" onclick="applyQuickDatePreset('today')">วันนี้</button>
+                          <button type="button" class="btn btn-light btn-sm py-0 px-2 border" style="font-size: 0.72rem;" onclick="applyQuickDatePreset('7days')">7 วันล่าสุด</button>
+                        </div>
+                        <button type="button" class="btn btn-outline-danger btn-sm py-0 px-2" style="font-size: 0.72rem;" onclick="clearAdminDateFilter()">
+                          <i class="fas fa-xmark me-1"></i>ล้างวันที่
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </th>
+                <th>
+                  <div class="dropdown d-inline-block">
+                    <button type="button" class="th-filter-btn" id="thSystemFilterBtn" data-bs-toggle="dropdown" data-bs-popper-config='{"strategy":"fixed"}' title="คลิกเพื่อกรองตามระบบงาน">
+                      <span id="thSystemFilterLabel">ระบบงาน</span>
+                      <i class="fas fa-filter text-danger" style="font-size: 0.68rem;"></i>
+                      <i class="fas fa-caret-down opacity-75" style="font-size: 0.7rem;"></i>
+                    </button>
+                    <ul class="dropdown-menu shadow-lg border rounded-3 py-1" id="headerSystemFilterMenu" style="max-height: 300px; overflow-y: auto; min-width: 250px; font-size: 0.8rem; z-index: 1080;">
+                      <li><a class="dropdown-item active" href="javascript:void(0)" onclick="selectAdminSystemFilter('all')">ทุกระบบงาน (แสดงทั้งหมด)</a></li>
+                    </ul>
+                  </div>
+                </th>
                 <th>หน่วยงานต้นสังกัด</th>
                 <th>ผู้แจ้ง / ติดต่อ</th>
                 <th>ประเภท &amp; รายละเอียด</th>
-                <th style="width: 110px;">สถานะ</th>
+                <th style="width: 115px;">
+                  <div class="dropdown d-inline-block">
+                    <button type="button" class="th-filter-btn" id="thStatusFilterBtn" data-bs-toggle="dropdown" data-bs-popper-config='{"strategy":"fixed"}' title="คลิกเพื่อกรองตามสถานะ">
+                      <span id="thStatusFilterLabel">สถานะ</span>
+                      <i class="fas fa-filter text-danger" style="font-size: 0.68rem;"></i>
+                      <i class="fas fa-caret-down opacity-75" style="font-size: 0.7rem;"></i>
+                    </button>
+                    <ul class="dropdown-menu shadow-lg border rounded-3 py-1" id="headerStatusFilterMenu" style="min-width: 195px; font-size: 0.8rem; z-index: 1080;">
+                      <li><a class="dropdown-item fw-semibold" href="javascript:void(0)" onclick="selectAdminStatusFilter('all')"><i class="fas fa-layer-group me-2 text-secondary"></i>ทุกสถานะ (แสดงทั้งหมด)</a></li>
+                      <li><hr class="dropdown-divider my-1"></li>
+                      <li><a class="dropdown-item" href="javascript:void(0)" onclick="selectAdminStatusFilter('รอดำเนินการ')">🟡 รอดำเนินการ</a></li>
+                      <li><a class="dropdown-item" href="javascript:void(0)" onclick="selectAdminStatusFilter('กำลังดำเนินการ')">🔵 กำลังดำเนินการ</a></li>
+                      <li><a class="dropdown-item" href="javascript:void(0)" onclick="selectAdminStatusFilter('แก้ไขแล้ว')">🟢 แก้ไขแล้ว</a></li>
+                    </ul>
+                  </div>
+                </th>
                 <th style="width: 150px;">ผู้รับงาน / วันเวลา</th>
                 <th>บันทึกแอดมิน</th>
                 <th style="width: 120px;" class="text-center">การจัดการ</th>
@@ -1057,14 +1211,15 @@
           </table>
         </div>
 
-        <!-- Table Footer / Helper Links -->
-        <div class="d-flex justify-content-between align-items-center pt-3 border-top mt-3 small text-muted">
-          <div>
+        <!-- Table Footer / Pagination & Helper Links -->
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-center gap-2 pt-3 border-top mt-3 small text-muted">
+          <div id="adminPaginationInfo">
             แสดงผลรายการคำขอล่าสุด <span id="adminTicketCountBadge" class="fw-bold text-dark">0</span> รายการ
           </div>
-          <div>
-            <a href="https://docs.google.com/spreadsheets/d/1XwQuHsav9w_0w24tL1e6Sczsb0gUhZ6-hfBCAtxE98M/edit" target="_blank" class="text-muted text-decoration-none">
-              <i class="fas fa-table me-1"></i>เปิดดู Google Sheets ต้นทาง (สำรอง)
+          <div class="d-flex flex-wrap align-items-center gap-2">
+            <div class="d-flex align-items-center gap-1" id="adminPaginationControls"></div>
+            <a href="https://docs.google.com/spreadsheets/d/1XwQuHsav9w_0w24tL1e6Sczsb0gUhZ6-hfBCAtxE98M/edit" target="_blank" class="text-muted text-decoration-none ms-2" title="เปิดดู Google Sheets ต้นทาง">
+              <i class="fas fa-table me-1"></i>ชีตต้นทาง
             </a>
           </div>
         </div>
@@ -1824,7 +1979,13 @@
     let chartSystemDistributionInstance = null;
     let currentAdminFilterStatus = 'all';
     let currentAdminFilterCollege = 'all';
+    let currentAdminFilterSystem = 'all';
+    let currentAdminSingleDate = '';
+    let currentAdminDateStart = '';
+    let currentAdminDateEnd = '';
     let currentAdminSearch = '';
+    let adminPageSize = 10;
+    let adminCurrentPage = 1;
 
     document.addEventListener('DOMContentLoaded', function() {
       // Initialize Bootstrap Toast
@@ -1863,6 +2024,7 @@
       if (adminSearch) {
         adminSearch.addEventListener('input', function(e) {
           currentAdminSearch = e.target.value.trim().toLowerCase();
+          adminCurrentPage = 1;
           renderAdminTicketsTable();
         });
       }
@@ -1871,6 +2033,7 @@
       if (adminStatusFilter) {
         adminStatusFilter.addEventListener('change', function(e) {
           currentAdminFilterStatus = e.target.value;
+          adminCurrentPage = 1;
           renderAdminTicketsTable();
         });
       }
@@ -1879,6 +2042,7 @@
       if (adminCollegeFilter) {
         adminCollegeFilter.addEventListener('change', function(e) {
           currentAdminFilterCollege = e.target.value;
+          adminCurrentPage = 1;
           renderAdminTicketsTable();
         });
       }
@@ -2330,6 +2494,9 @@
       // Render Charts
       renderAdminCharts(res.analytics || {});
 
+      // Populate Header System Filter Dropdown
+      populateHeaderSystemFilterMenu();
+
       // Render Table
       renderAdminTicketsTable();
     }
@@ -2623,16 +2790,293 @@
         });
     }
 
+    function extractTicketDateYMD(val) {
+      if (!val) return '';
+      const s = String(val).trim();
+      const dmY = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+      if (dmY) {
+        const dd = dmY[1].padStart(2, '0');
+        const mm = dmY[2].padStart(2, '0');
+        let yyyy = Number(dmY[3]);
+        if (yyyy >= 2500) yyyy -= 543;
+        return `${yyyy}-${mm}-${dd}`;
+      }
+      const d = new Date(s);
+      if (!isNaN(d.getTime())) {
+        const yyyy = d.getFullYear();
+        const mm = String(d.getMonth() + 1).padStart(2, '0');
+        const dd = String(d.getDate()).padStart(2, '0');
+        return `${yyyy}-${mm}-${dd}`;
+      }
+      return '';
+    }
+
+    function formatYMDToThaiShort(ymd) {
+      if (!ymd) return '';
+      const parts = ymd.split('-');
+      if (parts.length !== 3) return ymd;
+      return `${parts[2]}/${parts[1]}/${parts[0]}`;
+    }
+
+    function populateHeaderSystemFilterMenu() {
+      const menu = document.getElementById('headerSystemFilterMenu');
+      if (!menu) return;
+
+      const counts = {};
+      adminTickets.forEach(t => {
+        const sys = String(t.system_name || 'ทั่วไป').trim();
+        counts[sys] = (counts[sys] || 0) + 1;
+      });
+
+      const sysList = Object.keys(counts);
+      let html = `
+        <li>
+          <a class="dropdown-item d-flex justify-content-between align-items-center ${currentAdminFilterSystem === 'all' ? 'active fw-bold' : ''}" href="javascript:void(0)" onclick="selectAdminSystemFilter('all')">
+            <span><i class="fas fa-layer-group me-2 text-secondary"></i>ทุกระบบงาน (ทั้งหมด)</span>
+            <span class="badge rounded-pill bg-secondary-subtle text-dark">${adminTickets.length}</span>
+          </a>
+        </li>
+        <li><hr class="dropdown-divider my-1"></li>
+      `;
+
+      sysList.forEach(sys => {
+        const st = getSystemColorStyle(sys);
+        const isActive = (currentAdminFilterSystem === sys);
+        const safeSys = sys.replace(/'/g, "\\'");
+        html += `
+          <li>
+            <a class="dropdown-item d-flex justify-content-between align-items-center ${isActive ? 'fw-bold bg-light' : ''}" href="javascript:void(0)" onclick="selectAdminSystemFilter('${safeSys}')">
+              <span class="text-truncate" style="max-width: 195px;">
+                <span class="d-inline-block rounded-circle me-2" style="width: 8px; height: 8px; background: ${st.bar};"></span>${sys}
+              </span>
+              <span class="badge rounded-pill ms-2" style="background: ${st.bg}; color: ${st.text}; border: 1px solid ${st.border};">${counts[sys]}</span>
+            </a>
+          </li>
+        `;
+      });
+
+      menu.innerHTML = html;
+    }
+
+    function selectAdminSystemFilter(sysName) {
+      currentAdminFilterSystem = sysName || 'all';
+      adminCurrentPage = 1;
+      populateHeaderSystemFilterMenu();
+      renderAdminTicketsTable();
+    }
+
+    function selectAdminStatusFilter(statusVal) {
+      currentAdminFilterStatus = statusVal || 'all';
+      const topSelect = document.getElementById('adminStatusFilter');
+      if (topSelect) topSelect.value = currentAdminFilterStatus;
+      adminCurrentPage = 1;
+      renderAdminTicketsTable();
+    }
+
+    function handleSingleDateChange(val) {
+      currentAdminSingleDate = val || '';
+      if (currentAdminSingleDate) {
+        currentAdminDateStart = '';
+        currentAdminDateEnd = '';
+        const sIn = document.getElementById('filterDateStartInput');
+        const eIn = document.getElementById('filterDateEndInput');
+        if (sIn) sIn.value = '';
+        if (eIn) eIn.value = '';
+      }
+      adminCurrentPage = 1;
+      renderAdminTicketsTable();
+    }
+
+    function handleDateRangeChange() {
+      const sIn = document.getElementById('filterDateStartInput');
+      const eIn = document.getElementById('filterDateEndInput');
+      currentAdminDateStart = sIn ? sIn.value : '';
+      currentAdminDateEnd = eIn ? eIn.value : '';
+      if (currentAdminDateStart || currentAdminDateEnd) {
+        currentAdminSingleDate = '';
+        const singleIn = document.getElementById('filterSingleDateInput');
+        if (singleIn) singleIn.value = '';
+      }
+      adminCurrentPage = 1;
+      renderAdminTicketsTable();
+    }
+
+    function applyQuickDatePreset(preset) {
+      const now = new Date();
+      const todayYMD = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+      const singleIn = document.getElementById('filterSingleDateInput');
+      const sIn = document.getElementById('filterDateStartInput');
+      const eIn = document.getElementById('filterDateEndInput');
+
+      if (preset === 'today') {
+        currentAdminSingleDate = todayYMD;
+        currentAdminDateStart = '';
+        currentAdminDateEnd = '';
+        if (singleIn) singleIn.value = todayYMD;
+        if (sIn) sIn.value = '';
+        if (eIn) eIn.value = '';
+      } else if (preset === '7days') {
+        const past = new Date(now.getTime() - 6 * 24 * 60 * 60 * 1000);
+        const pastYMD = `${past.getFullYear()}-${String(past.getMonth() + 1).padStart(2, '0')}-${String(past.getDate()).padStart(2, '0')}`;
+        currentAdminSingleDate = '';
+        currentAdminDateStart = pastYMD;
+        currentAdminDateEnd = todayYMD;
+        if (singleIn) singleIn.value = '';
+        if (sIn) sIn.value = pastYMD;
+        if (eIn) eIn.value = todayYMD;
+      }
+      adminCurrentPage = 1;
+      renderAdminTicketsTable();
+    }
+
+    function clearAdminDateFilter() {
+      currentAdminSingleDate = '';
+      currentAdminDateStart = '';
+      currentAdminDateEnd = '';
+      const singleIn = document.getElementById('filterSingleDateInput');
+      const sIn = document.getElementById('filterDateStartInput');
+      const eIn = document.getElementById('filterDateEndInput');
+      if (singleIn) singleIn.value = '';
+      if (sIn) sIn.value = '';
+      if (eIn) eIn.value = '';
+      adminCurrentPage = 1;
+      renderAdminTicketsTable();
+    }
+
+    function handleAdminPageSizeChange(val) {
+      adminPageSize = (val === 'all') ? 'all' : Number(val || 10);
+      adminCurrentPage = 1;
+      renderAdminTicketsTable();
+    }
+
+    function goToAdminPage(page) {
+      adminCurrentPage = Math.max(1, Number(page || 1));
+      renderAdminTicketsTable();
+    }
+
+    function resetAllAdminTableFilters() {
+      currentAdminSearch = '';
+      currentAdminFilterStatus = 'all';
+      currentAdminFilterCollege = 'all';
+      currentAdminFilterSystem = 'all';
+      currentAdminSingleDate = '';
+      currentAdminDateStart = '';
+      currentAdminDateEnd = '';
+      adminCurrentPage = 1;
+
+      const sBox = document.getElementById('adminSearchInput');
+      const stSel = document.getElementById('adminStatusFilter');
+      const colSel = document.getElementById('adminCollegeFilter');
+      const singleIn = document.getElementById('filterSingleDateInput');
+      const sIn = document.getElementById('filterDateStartInput');
+      const eIn = document.getElementById('filterDateEndInput');
+
+      if (sBox) sBox.value = '';
+      if (stSel) stSel.value = 'all';
+      if (colSel) colSel.value = 'all';
+      if (singleIn) singleIn.value = '';
+      if (sIn) sIn.value = '';
+      if (eIn) eIn.value = '';
+
+      populateHeaderSystemFilterMenu();
+      renderAdminTicketsTable();
+    }
+
+    function updateAdminHeaderFilterUI() {
+      const thDateBtn = document.getElementById('thDateFilterBtn');
+      const thDateLbl = document.getElementById('thDateFilterLabel');
+      const thSysBtn = document.getElementById('thSystemFilterBtn');
+      const thSysLbl = document.getElementById('thSystemFilterLabel');
+      const thStatusBtn = document.getElementById('thStatusFilterBtn');
+      const thStatusLbl = document.getElementById('thStatusFilterLabel');
+      const resetBtn = document.getElementById('resetAdminFiltersBtn');
+      const activeBar = document.getElementById('adminActiveFiltersBar');
+
+      const hasDateFilter = !!(currentAdminSingleDate || currentAdminDateStart || currentAdminDateEnd);
+      const hasSysFilter = (currentAdminFilterSystem !== 'all');
+      const hasStatusFilter = (currentAdminFilterStatus !== 'all');
+      const hasCollegeFilter = (currentAdminFilterCollege !== 'all');
+      const hasSearch = !!currentAdminSearch;
+
+      if (thDateBtn && thDateLbl) {
+        thDateBtn.classList.toggle('active-filter', hasDateFilter);
+        if (currentAdminSingleDate) {
+          thDateLbl.innerText = formatYMDToThaiShort(currentAdminSingleDate);
+        } else if (currentAdminDateStart || currentAdminDateEnd) {
+          thDateLbl.innerText = 'ช่วงวันที่';
+        } else {
+          thDateLbl.innerText = 'วัน-เวลาแจ้ง';
+        }
+      }
+
+      if (thSysBtn && thSysLbl) {
+        thSysBtn.classList.toggle('active-filter', hasSysFilter);
+        thSysLbl.innerText = hasSysFilter ? (currentAdminFilterSystem.length > 16 ? currentAdminFilterSystem.slice(0, 16) + '…' : currentAdminFilterSystem) : 'ระบบงาน';
+      }
+
+      if (thStatusBtn && thStatusLbl) {
+        thStatusBtn.classList.toggle('active-filter', hasStatusFilter);
+        thStatusLbl.innerText = hasStatusFilter ? currentAdminFilterStatus : 'สถานะ';
+      }
+
+      const anyActive = hasDateFilter || hasSysFilter || hasStatusFilter || hasCollegeFilter || hasSearch;
+      if (resetBtn) {
+        resetBtn.style.display = anyActive ? 'inline-flex' : 'none';
+      }
+
+      if (activeBar) {
+        if (!anyActive) {
+          activeBar.style.setProperty('display', 'none', 'important');
+          activeBar.innerHTML = '';
+        } else {
+          activeBar.style.removeProperty('display');
+          let pills = '<small class="text-muted fw-semibold me-1"><i class="fas fa-filter text-danger me-1"></i>ตัวกรองที่เลือก:</small>';
+          if (currentAdminSingleDate) {
+            pills += `<span class="badge rounded-pill bg-danger-subtle text-danger border border-danger-subtle px-2 py-1">วันที่: ${formatYMDToThaiShort(currentAdminSingleDate)} <i class="fas fa-xmark ms-1" style="cursor:pointer;" onclick="clearAdminDateFilter()"></i></span>`;
+          } else if (currentAdminDateStart || currentAdminDateEnd) {
+            const sTxt = currentAdminDateStart ? formatYMDToThaiShort(currentAdminDateStart) : '...';
+            const eTxt = currentAdminDateEnd ? formatYMDToThaiShort(currentAdminDateEnd) : '...';
+            pills += `<span class="badge rounded-pill bg-danger-subtle text-danger border border-danger-subtle px-2 py-1">ช่วงวันที่: ${sTxt} ถึง ${eTxt} <i class="fas fa-xmark ms-1" style="cursor:pointer;" onclick="clearAdminDateFilter()"></i></span>`;
+          }
+          if (hasSysFilter) {
+            pills += `<span class="badge rounded-pill bg-primary-subtle text-primary border border-primary-subtle px-2 py-1">ระบบ: ${currentAdminFilterSystem} <i class="fas fa-xmark ms-1" style="cursor:pointer;" onclick="selectAdminSystemFilter('all')"></i></span>`;
+          }
+          if (hasStatusFilter) {
+            pills += `<span class="badge rounded-pill bg-warning-subtle text-dark border border-warning-subtle px-2 py-1">สถานะ: ${currentAdminFilterStatus} <i class="fas fa-xmark ms-1" style="cursor:pointer;" onclick="selectAdminStatusFilter('all')"></i></span>`;
+          }
+          if (hasCollegeFilter) {
+            pills += `<span class="badge rounded-pill bg-secondary-subtle text-dark border px-2 py-1">หน่วยงาน: ${currentAdminFilterCollege}</span>`;
+          }
+          activeBar.innerHTML = pills;
+        }
+      }
+    }
+
     function renderAdminTicketsTable() {
       const tbody = document.getElementById('adminTicketsTbody');
-      const countBadge = document.getElementById('adminTicketCountBadge');
+      const infoEl = document.getElementById('adminPaginationInfo');
+      const pageControlsEl = document.getElementById('adminPaginationControls');
       if (!tbody) return;
+
+      updateAdminHeaderFilterUI();
 
       const filtered = adminTickets.filter(t => {
         const parsed = parseTicketDetailAndImages(t.issue_detail);
         const audit = parseAdminAudit(t.admin_notes, t.resolved_at);
+        const ticketYMD = extractTicketDateYMD(t.created_at);
+
         const matchStatus = (currentAdminFilterStatus === 'all' || t.status.includes(currentAdminFilterStatus));
         const matchCollege = (currentAdminFilterCollege === 'all' || t.college_name === currentAdminFilterCollege);
+        const matchSystem = (currentAdminFilterSystem === 'all' || (t.system_name || 'ทั่วไป') === currentAdminFilterSystem);
+
+        let matchDate = true;
+        if (currentAdminSingleDate) {
+          matchDate = (ticketYMD === currentAdminSingleDate);
+        } else if (currentAdminDateStart || currentAdminDateEnd) {
+          if (currentAdminDateStart && (!ticketYMD || ticketYMD < currentAdminDateStart)) matchDate = false;
+          if (currentAdminDateEnd && (!ticketYMD || ticketYMD > currentAdminDateEnd)) matchDate = false;
+        }
+
         const matchSearch = (!currentAdminSearch ||
           t.ticket_id.toLowerCase().includes(currentAdminSearch) ||
           t.reporter_name.toLowerCase().includes(currentAdminSearch) ||
@@ -2641,12 +3085,46 @@
           parsed.text.toLowerCase().includes(currentAdminSearch) ||
           (audit.adminName && audit.adminName.toLowerCase().includes(currentAdminSearch))
         );
-        return matchStatus && matchCollege && matchSearch;
+        return matchStatus && matchCollege && matchSystem && matchDate && matchSearch;
       });
 
-      if (countBadge) countBadge.innerText = filtered.length;
+      const totalFiltered = filtered.length;
+      const effectivePageSize = (adminPageSize === 'all') ? Math.max(1, totalFiltered) : Number(adminPageSize || 10);
+      const totalPages = Math.max(1, Math.ceil(totalFiltered / effectivePageSize));
+      if (adminCurrentPage > totalPages) adminCurrentPage = totalPages;
 
-      if (filtered.length === 0) {
+      const startIdx = (adminCurrentPage - 1) * effectivePageSize;
+      const endIdx = (adminPageSize === 'all') ? totalFiltered : Math.min(startIdx + effectivePageSize, totalFiltered);
+      const pageItems = filtered.slice(startIdx, endIdx);
+
+      if (infoEl) {
+        const startDisp = totalFiltered > 0 ? (startIdx + 1) : 0;
+        infoEl.innerHTML = `แสดง <span class="fw-bold text-dark">${startDisp}</span> ถึง <span class="fw-bold text-dark">${endIdx}</span> จากทั้งหมด <span id="adminTicketCountBadge" class="fw-bold text-danger">${totalFiltered}</span> รายการ` +
+          (totalFiltered !== adminTickets.length ? ` <span class="text-muted">(กรองจาก ${adminTickets.length} รายการ)</span>` : '');
+      }
+
+      if (pageControlsEl) {
+        let pHtml = '';
+        pHtml += `<button type="button" class="fon-page-btn" onclick="goToAdminPage(1)" ${adminCurrentPage <= 1 ? 'disabled' : ''} title="หน้าแรก">&laquo;</button>`;
+        pHtml += `<button type="button" class="fon-page-btn" onclick="goToAdminPage(${adminCurrentPage - 1})" ${adminCurrentPage <= 1 ? 'disabled' : ''} title="ก่อนหน้า">&lsaquo;</button>`;
+
+        const maxVisible = 5;
+        let startP = Math.max(1, adminCurrentPage - 2);
+        let endP = Math.min(totalPages, startP + maxVisible - 1);
+        if (endP - startP < maxVisible - 1) {
+          startP = Math.max(1, endP - maxVisible + 1);
+        }
+
+        for (let p = startP; p <= endP; p++) {
+          pHtml += `<button type="button" class="fon-page-btn ${p === adminCurrentPage ? 'active' : ''}" onclick="goToAdminPage(${p})">${p}</button>`;
+        }
+
+        pHtml += `<button type="button" class="fon-page-btn" onclick="goToAdminPage(${adminCurrentPage + 1})" ${adminCurrentPage >= totalPages ? 'disabled' : ''} title="ถัดไป">&rsaquo;</button>`;
+        pHtml += `<button type="button" class="fon-page-btn" onclick="goToAdminPage(${totalPages})" ${adminCurrentPage >= totalPages ? 'disabled' : ''} title="หน้าสุดท้าย">&raquo;</button>`;
+        pageControlsEl.innerHTML = pHtml;
+      }
+
+      if (pageItems.length === 0) {
         tbody.innerHTML = `
           <tr>
             <td colspan="10" class="text-center py-4 text-muted">
@@ -2659,7 +3137,7 @@
       }
 
       let html = '';
-      filtered.forEach(t => {
+      pageItems.forEach(t => {
         let badgeClass = 'status-pending';
         let icon = 'fa-clock';
         if (t.status.includes('ดำเนิน')) { badgeClass = 'status-progress'; icon = 'fa-arrows-rotate'; }
