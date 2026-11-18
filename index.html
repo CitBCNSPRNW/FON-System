@@ -838,7 +838,7 @@
 
           <!-- Evaluation Form -->
           <div class="col-lg-3 col-md-6 col-sm-12">
-            <a href="https://forms.gle/bii3mTUvLuaTS9RF6" target="_blank" class="fon-resource-card">
+            <a href="https://forms.gle/84xFRbyoAc6GqCKi6" id="resourceEvaluationLink" target="_blank" class="fon-resource-card">
               <div class="fon-resource-icon" style="background: #fdf2f8; color: #db2777;">
                 <i class="fas fa-square-poll-vertical"></i>
               </div>
@@ -851,7 +851,7 @@
 
           <!-- Template DB -->
           <div class="col-lg-3 col-md-6 col-sm-12">
-            <a href="https://piacth-my.sharepoint.com/:f:/r/personal/santi_y_pi_ac_th/Documents/ระบบสารสนเทศคณะพยาบาลศาสตร์" target="_blank" class="fon-resource-card">
+            <a href="https://piacth-my.sharepoint.com/:f:/r/personal/santi_y_pi_ac_th/Documents/ระบบสารสนเทศคณะพยาบาลศาสตร์" id="resourceTemplateLink" target="_blank" class="fon-resource-card">
               <div class="fon-resource-icon" style="background: #eff6ff; color: #2563eb;">
                 <i class="fas fa-file-excel"></i>
               </div>
@@ -864,7 +864,7 @@
 
           <!-- Training Videos -->
           <div class="col-lg-3 col-md-6 col-sm-12">
-            <a href="https://drive.google.com/drive/folders/1wJcWqyPPibo7uhWSoRIS6rn8uayUPgwX?usp=drive_link" target="_blank" class="fon-resource-card">
+            <a href="https://drive.google.com/drive/folders/1wJcWqyPPibo7uhWSoRIS6rn8uayUPgwX?usp=drive_link" id="resourceVideoLink" target="_blank" class="fon-resource-card">
               <div class="fon-resource-icon" style="background: #fff7ed; color: #ea580c;">
                 <i class="fas fa-video"></i>
               </div>
@@ -2152,6 +2152,25 @@
       if (!data) return;
       allSystems = data.systems || [];
       allCategories = data.categories || [];
+
+      // Apply dynamic SiteConfig links & title from 'SiteConfig' sheet
+      if (data.config) {
+        const cfg = data.config;
+        const evalLink = document.getElementById('resourceEvaluationLink');
+        if (evalLink && cfg.evaluation_url) evalLink.href = cfg.evaluation_url;
+
+        const tmplLink = document.getElementById('resourceTemplateLink');
+        if (tmplLink && cfg.template_db_url) tmplLink.href = cfg.template_db_url;
+
+        const vidLink = document.getElementById('resourceVideoLink');
+        if (vidLink && cfg.training_video_url) vidLink.href = cfg.training_video_url;
+
+        const lineBtn = document.getElementById('lineDirectOpenBtn');
+        if (lineBtn && cfg.line_group_url) lineBtn.href = cfg.line_group_url;
+
+        const brandTitle = document.querySelector('.fon-brand-title');
+        if (brandTitle && cfg.portal_title) brandTitle.innerText = cfg.portal_title;
+      }
       
       // Auto-register any custom category_id found in systems
       const existingCatIds = new Set(allCategories.map(c => c.category_id));
