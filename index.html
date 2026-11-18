@@ -568,6 +568,19 @@
       box-shadow: var(--fon-shadow-md);
     }
 
+    .fon-kpi-card.kpi-clickable {
+      cursor: pointer;
+      user-select: none;
+      position: relative;
+    }
+
+    .fon-kpi-card.kpi-active {
+      background: #fff8f8;
+      border-color: var(--fon-primary) !important;
+      box-shadow: 0 0 0 2px rgba(122, 12, 30, 0.2), var(--fon-shadow-md);
+      transform: translateY(-2px);
+    }
+
     .fon-kpi-val {
       font-size: 1.9rem;
       font-weight: 700;
@@ -865,16 +878,18 @@
       </div>
     </section>
 
-    <!-- Public Footer -->
-    <footer class="fon-footer text-center">
+    <!-- Public Footer (Moved version to left/inline so floating button on bottom-right never overlaps) -->
+    <footer class="fon-footer">
       <div class="container-xl">
-        <div class="d-flex flex-column flex-md-row align-items-center justify-content-between gap-3">
-          <div class="text-md-start">
+        <div class="d-flex flex-column flex-md-row align-items-center justify-content-start gap-2 text-center text-md-start">
+          <div>
             <div style="font-weight: 700; color: var(--fon-text-main);">ระบบสารสนเทศคณะพยาบาลศาสตร์ สถาบันพระบรมราชชนก</div>
-            <small class="text-muted">Faculty of Nursing, Praboromarajchanok Institute (FON-PBRI)</small>
-          </div>
-          <div class="text-md-end">
-            <small class="text-muted d-block">Version v1.5.0 | Build 2026.11.17</small>
+            <div class="d-flex flex-wrap align-items-center justify-content-center justify-content-md-start gap-2 mt-1">
+              <small class="text-muted">Faculty of Nursing, Praboromarajchanok Institute (FON-PBRI)</small>
+              <span class="badge rounded-pill bg-light text-secondary border px-2 py-1" style="font-weight: 600; font-size: 0.73rem;">
+                <i class="fas fa-code-branch me-1 text-danger"></i>Version v1.9.0 | Build 2026.11.18
+              </span>
+            </div>
           </div>
         </div>
       </div>
@@ -934,11 +949,11 @@
     <!-- Admin Content Workspace -->
     <div class="container-fluid py-4 px-lg-4">
 
-      <!-- Row 1: KPI & SLA Metric Cards (6 Cards) -->
+      <!-- Row 1: KPI & SLA Metric Cards (6 Cards - First 4 Clickable as Status Filters) -->
       <div class="row g-3 mb-4">
         <!-- 1. Total Tickets -->
         <div class="col-xl-2 col-lg-4 col-md-4 col-sm-6">
-          <div class="fon-kpi-card">
+          <div class="fon-kpi-card kpi-clickable" id="kpiCardAll" onclick="handleKpiStatusCardClick('all')" title="คลิกเพื่อแสดงคำขอทุกสถานะ">
             <div class="d-flex justify-content-between align-items-start">
               <div>
                 <div class="fon-kpi-label">คำขอทั้งหมด</div>
@@ -948,13 +963,13 @@
                 <i class="fas fa-ticket"></i>
               </div>
             </div>
-            <small class="text-muted mt-2 d-block">รวมทุกหน่วยงาน 31 แห่ง</small>
+            <small class="text-muted mt-2 d-block"><i class="fas fa-hand-pointer me-1 opacity-75"></i>คลิกดูทั้งหมด (31 แห่ง)</small>
           </div>
         </div>
 
         <!-- 2. Pending -->
         <div class="col-xl-2 col-lg-4 col-md-4 col-sm-6">
-          <div class="fon-kpi-card" style="border-left: 4px solid #f59e0b;">
+          <div class="fon-kpi-card kpi-clickable" id="kpiCardPending" style="border-left: 4px solid #f59e0b;" onclick="handleKpiStatusCardClick('รอดำเนินการ')" title="คลิกเพื่อกรองเฉพาะสถานะ รอดำเนินการ">
             <div class="d-flex justify-content-between align-items-start">
               <div>
                 <div class="fon-kpi-label text-warning">รอดำเนินการ</div>
@@ -964,13 +979,13 @@
                 <i class="fas fa-clock"></i>
               </div>
             </div>
-            <small class="text-danger mt-2 d-block"><i class="fas fa-triangle-exclamation me-1"></i>รอตอบกลับ/แก้ไข</small>
+            <small class="text-danger mt-2 d-block"><i class="fas fa-filter me-1"></i>คลิกกรองรอตอบกลับ</small>
           </div>
         </div>
 
         <!-- 3. In Progress -->
         <div class="col-xl-2 col-lg-4 col-md-4 col-sm-6">
-          <div class="fon-kpi-card" style="border-left: 4px solid #0284c7;">
+          <div class="fon-kpi-card kpi-clickable" id="kpiCardProgress" style="border-left: 4px solid #0284c7;" onclick="handleKpiStatusCardClick('กำลังดำเนินการ')" title="คลิกเพื่อกรองเฉพาะสถานะ กำลังดำเนินการ">
             <div class="d-flex justify-content-between align-items-start">
               <div>
                 <div class="fon-kpi-label text-info">กำลังดำเนินการ</div>
@@ -980,13 +995,13 @@
                 <i class="fas fa-arrows-rotate"></i>
               </div>
             </div>
-            <small class="text-muted mt-2 d-block">อยู่ระหว่างประสานงาน</small>
+            <small class="text-muted mt-2 d-block"><i class="fas fa-filter me-1"></i>คลิกกรองกำลังประสานงาน</small>
           </div>
         </div>
 
         <!-- 4. Resolved -->
         <div class="col-xl-2 col-lg-4 col-md-4 col-sm-6">
-          <div class="fon-kpi-card" style="border-left: 4px solid #16a34a;">
+          <div class="fon-kpi-card kpi-clickable" id="kpiCardResolved" style="border-left: 4px solid #16a34a;" onclick="handleKpiStatusCardClick('แก้ไขแล้ว')" title="คลิกเพื่อกรองเฉพาะสถานะ แก้ไขแล้วเสร็จ">
             <div class="d-flex justify-content-between align-items-start">
               <div>
                 <div class="fon-kpi-label text-success">แก้ไขแล้วเสร็จ</div>
@@ -996,7 +1011,7 @@
                 <i class="fas fa-circle-check"></i>
               </div>
             </div>
-            <small class="text-muted mt-2 d-block">ปิดเรื่องสมบูรณ์</small>
+            <small class="text-muted mt-2 d-block"><i class="fas fa-filter me-1"></i>คลิกกรองปิดเรื่องสมบูรณ์</small>
           </div>
         </div>
 
@@ -1104,7 +1119,7 @@
             </select>
 
             <!-- Reset All Filters Button -->
-            <button type="button" class="btn btn-outline-danger btn-sm rounded-pill px-2 py-1" id="resetAdminFiltersBtn" onclick="resetAllAdminTableFilters()" style="font-size: 0.76rem; display: none;" title="ล้างตัวกรองทั้งหมด">
+            <button type="button" class="btn btn-outline-danger btn-sm rounded-pill px-3 py-1 fw-semibold" id="resetAdminFiltersBtn" onclick="resetAllAdminTableFilters()" style="font-size: 0.78rem;" title="ล้างตัวกรองทั้งหมด">
               <i class="fas fa-filter-circle-xmark me-1"></i>ล้างตัวกรอง
             </button>
           </div>
@@ -2865,6 +2880,16 @@
       renderAdminTicketsTable();
     }
 
+    function handleKpiStatusCardClick(statusVal) {
+      if (statusVal !== 'all' && currentAdminFilterStatus === statusVal) {
+        selectAdminStatusFilter('all');
+        showToast('แสดงคำขอทุกสถานะ');
+      } else {
+        selectAdminStatusFilter(statusVal);
+        showToast(statusVal === 'all' ? 'แสดงคำขอทุกสถานะ' : `กรองเฉพาะสถานะ "${statusVal}"`);
+      }
+    }
+
     function selectAdminStatusFilter(statusVal) {
       currentAdminFilterStatus = statusVal || 'all';
       const topSelect = document.getElementById('adminStatusFilter');
@@ -3019,9 +3044,21 @@
         thStatusLbl.innerText = hasStatusFilter ? currentAdminFilterStatus : 'สถานะ';
       }
 
+      // Highlight active KPI status card at top
+      const kpiAll = document.getElementById('kpiCardAll');
+      const kpiPending = document.getElementById('kpiCardPending');
+      const kpiProgress = document.getElementById('kpiCardProgress');
+      const kpiResolved = document.getElementById('kpiCardResolved');
+      if (kpiAll) kpiAll.classList.toggle('kpi-active', currentAdminFilterStatus === 'all');
+      if (kpiPending) kpiPending.classList.toggle('kpi-active', currentAdminFilterStatus === 'รอดำเนินการ');
+      if (kpiProgress) kpiProgress.classList.toggle('kpi-active', currentAdminFilterStatus === 'กำลังดำเนินการ');
+      if (kpiResolved) kpiResolved.classList.toggle('kpi-active', currentAdminFilterStatus === 'แก้ไขแล้ว');
+
       const anyActive = hasDateFilter || hasSysFilter || hasStatusFilter || hasCollegeFilter || hasSearch;
       if (resetBtn) {
-        resetBtn.style.display = anyActive ? 'inline-flex' : 'none';
+        resetBtn.className = anyActive
+          ? 'btn btn-danger btn-sm rounded-pill px-3 py-1 fw-semibold shadow-sm'
+          : 'btn btn-outline-secondary btn-sm rounded-pill px-3 py-1';
       }
 
       if (activeBar) {
@@ -3047,6 +3084,7 @@
           if (hasCollegeFilter) {
             pills += `<span class="badge rounded-pill bg-secondary-subtle text-dark border px-2 py-1">หน่วยงาน: ${currentAdminFilterCollege}</span>`;
           }
+          pills += `<button type="button" class="btn btn-link btn-sm text-danger text-decoration-none py-0 px-2 fw-bold" style="font-size: 0.76rem;" onclick="resetAllAdminTableFilters()"><i class="fas fa-rotate-left me-1"></i>ล้างตัวกรองทั้งหมด</button>`;
           activeBar.innerHTML = pills;
         }
       }
