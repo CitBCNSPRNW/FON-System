@@ -3598,6 +3598,38 @@
             `</div></div>`;
         }
 
+        let feedbackBoxHtml = '';
+        if (isResolved) {
+          const politeMsg = audit.noteText
+            ? `${audit.noteText}<div class="mt-1 text-success" style="font-size: 0.78rem;">ทางทีมงานได้ดำเนินการเรียบร้อยแล้ว ขอขอบคุณสำหรับข้อมูลและข้อเสนอแนะค่ะ</div>`
+            : `ทางทีมงานได้ดำเนินการตรวจสอบและแก้ไขให้เรียบร้อยแล้วค่ะ ขอขอบคุณสำหรับข้อมูลและข้อเสนอแนะ หากพบปัญหาเพิ่มเติมสามารถแจ้งเข้ามาได้ตลอดเวลานะคะ`;
+          feedbackBoxHtml = `
+            <div class="mt-2 p-2 px-3 rounded-2 small" style="background: #ecfdf5; border: 1px solid #a7f3d0; color: #065f46;">
+              <div class="fw-bold"><i class="fas fa-circle-check me-1"></i>ข้อความจากทีมงานสารสนเทศ คณะพยาบาลศาสตร์:</div>
+              <div class="mt-1">${politeMsg}</div>
+              ${audit.actionTime ? `<div class="text-muted mt-1" style="font-size: 0.72rem;"><i class="far fa-clock me-1"></i>อัปเดตล่าสุด: ${audit.actionTime}</div>` : ''}
+            </div>
+          `;
+        } else if (isProgress) {
+          const politeMsg = audit.noteText
+            ? `${audit.noteText}<div class="mt-1 text-primary" style="font-size: 0.78rem;">ทางทีมงานได้รับทราบข้อมูลและกำลังเร่งดำเนินการให้อย่างเต็มที่ค่ะ</div>`
+            : `ทางทีมงานได้รับทราบข้อมูลของท่านแล้ว และกำลังเร่งตรวจสอบดำเนินการแก้ไขให้อย่างเต็มที่ ขออภัยในความไม่สะดวกและขอขอบคุณที่รอรับบริการค่ะ`;
+          feedbackBoxHtml = `
+            <div class="mt-2 p-2 px-3 rounded-2 small" style="background: #eff6ff; border: 1px solid #bfdbfe; color: #1e40af;">
+              <div class="fw-bold"><i class="fas fa-arrows-rotate me-1"></i>ข้อความจากทีมงานสารสนเทศ คณะพยาบาลศาสตร์:</div>
+              <div class="mt-1">${politeMsg}</div>
+              ${audit.actionTime ? `<div class="text-muted mt-1" style="font-size: 0.72rem;"><i class="far fa-clock me-1"></i>อัปเดตล่าสุด: ${audit.actionTime}</div>` : ''}
+            </div>
+          `;
+        } else {
+          feedbackBoxHtml = `
+            <div class="mt-2 p-2 px-3 rounded-2 small" style="background: #fffbeb; border: 1px solid #fde68a; color: #92400e;">
+              <div class="fw-bold"><i class="fas fa-envelope-open-text me-1"></i>ทางทีมงานได้รับทราบข้อมูลของท่านเรียบร้อยแล้ว</div>
+              <div class="mt-1">ขณะนี้อยู่ระหว่างรอเจ้าหน้าที่ตรวจสอบและดำเนินการแก้ไข ขอขอบคุณที่แจ้งข้อมูลและข้อเสนอแนะให้เราทราบค่ะ</div>
+            </div>
+          `;
+        }
+
         html += `
           <div class="p-3 mb-3 rounded-3 border bg-white shadow-sm">
             <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 pb-2 mb-2 border-bottom">
@@ -3640,20 +3672,7 @@
               ${userImagesHtml}
             </div>
 
-            ${(audit.noteText || audit.adminName) ? `
-              <div class="mt-2 p-2 rounded-2 small" style="background: #ecfdf5; border: 1px solid #a7f3d0; color: #065f46;">
-                <div class="d-flex flex-wrap justify-content-between align-items-center gap-1">
-                  <strong><i class="fas fa-comment-dots me-1"></i>ผลการดำเนินการ / ข้อความจากผู้ดูแลระบบ:</strong>
-                  ${audit.adminName ? `<span class="badge bg-white text-success border border-success"><i class="fas fa-user-shield me-1"></i>ผู้รับผิดชอบ: ${audit.adminName}</span>` : ''}
-                </div>
-                ${audit.noteText ? `<div class="mt-1">${audit.noteText}</div>` : ''}
-                ${audit.actionTime ? `<div class="text-muted mt-1" style="font-size: 0.72rem;"><i class="far fa-clock me-1"></i>วัน-เวลาที่รับงาน/อัปเดต: ${audit.actionTime}</div>` : ''}
-              </div>
-            ` : `
-              <div class="mt-2 p-2 rounded-2 small text-muted" style="background: #fffbeb; border: 1px solid #fde68a;">
-                <i class="fas fa-hourglass-half text-warning me-1"></i>อยู่ระหว่างรอผู้ดูแลระบบกดรับงานและตรวจสอบแก้ไข
-              </div>
-            `}
+            ${feedbackBoxHtml}
           </div>
         `;
       });
