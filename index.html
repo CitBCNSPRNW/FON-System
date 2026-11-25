@@ -877,7 +877,7 @@
             <div class="d-flex flex-wrap align-items-center justify-content-center justify-content-md-start gap-2 mt-1">
               <small class="text-muted">Faculty of Nursing, Praboromarajchanok Institute (FON-PBRI)</small>
               <span class="badge rounded-pill bg-light text-secondary border px-2 py-1" style="font-weight: 600; font-size: 0.73rem;">
-                <i class="fas fa-code-branch me-1 text-danger"></i>Version v2.1.0 | Build 2026.11.25
+                <i class="fas fa-code-branch me-1 text-danger"></i>Version v2.1.1 | Build 2026.11.25
               </span>
             </div>
           </div>
@@ -2949,6 +2949,13 @@
       return `${dd}/${mm}/${yyyy} ${hh}:${min}`;
     }
 
+    function claimTicketFromModal(ticketId) {
+      const modalEl = document.getElementById('ticketActionModal');
+      const modal = modalEl ? bootstrap.Modal.getInstance(modalEl) : null;
+      if (modal) modal.hide();
+      claimTicketQuick(ticketId);
+    }
+
     function claimTicketQuick(ticketId) {
       const t = adminTickets.find(item => item.ticket_id === ticketId);
       if (!t) return;
@@ -3470,7 +3477,16 @@
         const handoverNotice = (wf.claimedBy && wf.claimedBy !== currentAdmin.name)
           ? `<div class="alert alert-info py-1 px-2 mb-2 border-0" style="font-size:0.75rem;background:#eff6ff;color:#1e40af;"><i class="fas fa-people-arrows me-1"></i>งานนี้รับเรื่องครั้งแรกโดย <b>${wf.claimedBy}</b> — คุณ (<b>${currentAdmin.name}</b>) สามารถช่วยดำเนินการหรือปิดงานต่อได้ โดยประวัติผู้รับงานเดิมจะยังคงถูกเก็บไว้ครบถ้วน</div>`
           : '';
+        const quickClaimCta = (!wf.claimedBy && t.status.includes('รอ'))
+          ? `<div class="mb-2 p-2 rounded-3 d-flex flex-wrap align-items-center justify-content-between gap-2" style="background:#eff6ff;border:1px solid #bfdbfe;">
+               <div class="small text-primary fw-semibold"><i class="fas fa-bolt me-1"></i>คำขอนี้ยังไม่มีผู้รับเรื่อง กดปุ่มเพื่อรับงานในชื่อ <b>${currentAdmin.name}</b></div>
+               <button type="button" class="btn btn-primary btn-sm rounded-pill px-3 fw-bold" style="background:#2563eb;border-color:#2563eb;" onclick="claimTicketFromModal('${t.ticket_id}')">
+                 <i class="fas fa-thumbs-up me-1"></i>ยืนยันกดรับงานทันที
+               </button>
+             </div>`
+          : '';
         auditInfoEl.innerHTML = `
+          ${quickClaimCta}
           ${handoverNotice}
           <div class="row g-2" style="font-size:0.76rem;">
             <div class="col-md-4">
