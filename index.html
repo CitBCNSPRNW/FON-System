@@ -877,7 +877,7 @@
             <div class="d-flex flex-wrap align-items-center justify-content-center justify-content-md-start gap-2 mt-1">
               <small class="text-muted">Faculty of Nursing, Praboromarajchanok Institute (FON-PBRI)</small>
               <span class="badge rounded-pill bg-light text-secondary border px-2 py-1" style="font-weight: 600; font-size: 0.73rem;">
-                <i class="fas fa-code-branch me-1 text-danger"></i>Version v1.9.0 | Build 2026.11.18
+                <i class="fas fa-code-branch me-1 text-danger"></i>Version v2.0.0 | Build 2026.11.25
               </span>
             </div>
           </div>
@@ -1991,6 +1991,8 @@
     let currentAdminSearch = '';
     let adminPageSize = 10;
     let adminCurrentPage = 1;
+    let isMagicAuthInProgress = false;
+    window.pendingMagicTicketId = '';
 
     document.addEventListener('DOMContentLoaded', function() {
       // Initialize Bootstrap Toast
@@ -2055,17 +2057,33 @@
       // Populate College Filter in Admin Workspace
       populateAdminCollegeFilter();
 
-      // Load Public Data
-      loadPortalData();
+      // Check 1-Click Magic Link from Admin Notification Email (?magic_token=...&magic_ticket=...&magic_mode=claim|manage)
+      const urlParams = new URLSearchParams(window.location.search);
+      const magicToken = urlParams.get('magic_token');
+      const magicTicket = urlParams.get('magic_ticket') || '';
+      const magicMode = urlParams.get('magic_mode') || 'manage';
 
-      // Check existing Admin Session
-      checkExistingAdminSession();
+      if (magicToken) {
+        isMagicAuthInProgress = true;
+        // Strip sensitive token from address bar immediately
+        try {
+          window.history.replaceState({}, document.title, window.location.pathname);
+        } catch (e) {}
+        loadPortalData();
+        handleMagicLinkEntry(magicToken, magicTicket, magicMode);
+      } else {
+        // Load Public Data
+        loadPortalData();
+
+        // Check existing Admin Session
+        checkExistingAdminSession();
+      }
     });
 
     /**
      * Switch View between Public Portal and Admin Command Center
      */
-    function switchView(viewName) {
+    function switchView(viewName, onTicketsLoaded) {
       const publicView = document.getElementById('publicPortalView');
       const adminView = document.getElementById('adminDashboardView');
 
@@ -2073,7 +2091,7 @@
         if (publicView) publicView.style.display = 'none';
         if (adminView) adminView.style.display = 'block';
         window.scrollTo(0, 0);
-        loadAdminTickets();
+        loadAdminTickets(onTicketsLoaded);
       } else {
         if (adminView) adminView.style.display = 'none';
         if (publicView) publicView.style.display = 'block';
@@ -2102,15 +2120,15 @@
           const cachedObj = JSON.parse(cachedStr);
           if (cachedObj && cachedObj.systems && cachedObj.systems.length > 0) {
             handleDataResponse(cachedObj);
-            setTimeout(() => showLoading(false), 120);
+            setTimeout(() => { if (!isMagicAuthInProgress) showLoading(false); }, 120);
           }
         } else {
           handleDataResponse(getFallbackData());
-          setTimeout(() => showLoading(false), 180);
+          setTimeout(() => { if (!isMagicAuthInProgress) showLoading(false); }, 180);
         }
       } catch (e) {
         handleDataResponse(getFallbackData());
-        setTimeout(() => showLoading(false), 180);
+        setTimeout(() => { if (!isMagicAuthInProgress) showLoading(false); }, 180);
       }
 
       // 2. Single fast live fetch from Google Sheets in background
@@ -2127,11 +2145,11 @@
             } catch (e) {}
             syncLocalTicketsToSheet();
           }
-          showLoading(false);
+          if (!isMagicAuthInProgress) showLoading(false);
         })
         .catch(err => {
           console.warn('Background sync notice:', err);
-          showLoading(false);
+          if (!isMagicAuthInProgress) showLoading(false);
         });
     }
 
@@ -2358,14 +2376,127 @@
       modal.show();
     }
 
+    function saveAdminSession(adminObj) {
+      if (!adminObj || !adminObj.email) return;
+      const cleanSession = {
+        email: adminObj.email,
+        name: adminObj.name || 'ผู้ดูแลระบบ',
+        org: adminObj.org || 'คณะพยาบาลศาสตร์',
+        role: adminObj.role || 'admin'
+      };
+      try {
+        sessionStorage.setItem('fon_admin_session', JSON.stringify(cleanSession));
+        localStorage.setItem('fon_admin_session_persist', JSON.stringify({
+          ...cleanSession,
+          expiresAt: Date.now() + (30 * 24 * 60 * 60 * 1000)
+        }));
+      } catch (e) {}
+    }
+
+    function getStoredAdminSession() {
+      try {
+        const saved = sessionStorage.getItem('fon_admin_session');
+        if (saved) return JSON.parse(saved);
+
+        const persistedStr = localStorage.getItem('fon_admin_session_persist');
+        if (persistedStr) {
+          const persisted = JSON.parse(persistedStr);
+          if (persisted && persisted.email && persisted.expiresAt && Date.now() < Number(persisted.expiresAt)) {
+            const restored = {
+              email: persisted.email,
+              name: persisted.name || 'ผู้ดูแลระบบ',
+              org: persisted.org || 'คณะพยาบาลศาสตร์',
+              role: persisted.role || 'admin'
+            };
+            sessionStorage.setItem('fon_admin_session', JSON.stringify(restored));
+            return restored;
+          } else {
+            localStorage.removeItem('fon_admin_session_persist');
+          }
+        }
+      } catch (e) {}
+      return null;
+    }
+
     function openAdminModal() {
-      const saved = sessionStorage.getItem('fon_admin_session');
+      const saved = getStoredAdminSession();
       if (saved) {
         switchView('admin');
         return;
       }
       const modal = new bootstrap.Modal(document.getElementById('adminAuthModal'));
       modal.show();
+    }
+
+    /**
+     * Handle 1-Click Magic Link Authentication from Admin Email Notification
+     */
+    function handleMagicLinkEntry(magicToken, magicTicket, magicMode) {
+      const modeClean = (magicMode || 'manage').toLowerCase();
+      showLoading(true, modeClean === 'claim' ? 'กำลังยืนยันสิทธิ์และกดรับงานอัตโนมัติ...' : 'กำลังยืนยันสิทธิ์ผู้ดูแลระบบจากอีเมล...');
+
+      const apiUrl = getGasUrl();
+      fetch(apiUrl, {
+        method: 'POST',
+        mode: 'cors',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({
+          action: 'verify_magic_link',
+          token: magicToken,
+          mode: modeClean,
+          ticket_id: magicTicket || ''
+        })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data && data.authorized) {
+          saveAdminSession({
+            email: data.email,
+            name: data.name || 'ผู้ดูแลระบบ',
+            org: data.org || 'คณะพยาบาลศาสตร์',
+            role: data.role || 'admin'
+          });
+          checkExistingAdminSession();
+
+          const targetTicket = data.ticket_id || magicTicket || '';
+          switchView('admin', function() {
+            isMagicAuthInProgress = false;
+            showLoading(false);
+            resetAllAdminTableFilters();
+
+            if (targetTicket) {
+              setTimeout(function() {
+                openTicketActionModal(targetTicket);
+              }, 220);
+            }
+
+            if (modeClean === 'claim' && data.claim_result && data.claim_result.message) {
+              showToast((data.claim_result.claimed ? '✅ ' : 'ℹ️ ') + data.claim_result.message);
+            } else {
+              showToast(`ยินดีต้อนรับคุณ ${data.name || 'ผู้ดูแลระบบ'}` + (targetTicket ? ` — เปิดคำขอ ${targetTicket} พร้อมจัดการค่ะ` : ''));
+            }
+          });
+        } else if (data && data.status === 'expired') {
+          isMagicAuthInProgress = false;
+          showLoading(false);
+          window.pendingMagicTicketId = data.ticket_id || magicTicket || '';
+          const emailInput = document.getElementById('adminEmailInput');
+          if (emailInput && data.email) emailInput.value = data.email;
+          const modal = new bootstrap.Modal(document.getElementById('adminAuthModal'));
+          modal.show();
+          alert('⏰ ' + (data.message || 'ลิงก์ด่วนจากอีเมลหมดอายุแล้ว (เกิน 30 วัน) กรุณากรอกรหัส PIN เพื่อเข้าใช้งานค่ะ'));
+        } else {
+          isMagicAuthInProgress = false;
+          showLoading(false);
+          alert('❌ ' + ((data && data.message) || 'ไม่สามารถยืนยันสิทธิ์จากลิงก์อีเมลได้ กรุณาเข้าสู่ระบบด้วยอีเมลและรหัส PIN ตามปกติค่ะ'));
+        }
+      })
+      .catch(err => {
+        console.warn('Magic link verification error:', err);
+        isMagicAuthInProgress = false;
+        showLoading(false);
+        alert('❌ ไม่สามารถเชื่อมต่อตรวจสอบลิงก์ยืนยันตัวตนได้ในขณะนี้ กรุณาลองใหม่อีกครั้งค่ะ');
+      });
     }
 
     /**
@@ -2407,18 +2538,27 @@
               org: data.org || 'คณะพยาบาลศาสตร์',
               role: data.role || 'admin'
             };
-            sessionStorage.setItem('fon_admin_session', JSON.stringify(adminObj));
+            saveAdminSession(adminObj);
 
             const authModalEl = document.getElementById('adminAuthModal');
             const modal = bootstrap.Modal.getInstance(authModalEl);
             if (modal) modal.hide();
 
+            const pendingTicket = window.pendingMagicTicketId || '';
+            window.pendingMagicTicketId = '';
+
             showToast(`ยินดีต้อนรับคุณ ${adminObj.name}`);
-            switchView('admin');
+            switchView('admin', function() {
+              if (pendingTicket) {
+                setTimeout(function() {
+                  openTicketActionModal(pendingTicket);
+                }, 220);
+              }
+            });
           } else {
             const msg = (data && data.message) || 'ข้อมูลการเข้าใช้งานไม่ถูกต้อง กรุณาตรวจสอบอีเมลและรหัส PIN ในชีต Admins อีกครั้ง';
             if (msg === 'รหัสความปลอดภัย (Security PIN) ไม่ถูกต้อง กรุณาตรวจสอบอีกครั้ง') {
-              alert('⚠️ ตัว Web App ใน Google Apps Script ยังค้างอยู่ที่เวอร์ชัน 2 (@2) จึงยังไม่อ่านคอลัมน์ pin ที่เพิ่งแก้ในชีตค่ะ\n\nวิธีสลับเป็นเวอร์ชันล่าสุด (ทำครั้งเดียว):\n1. เปิดหน้า Google Apps Script\n2. กดปุ่ม "การทำให้ใช้งานได้" > "จัดการการทำให้ใช้งานได้"\n3. กดไอคอน "รูปดินสอ ✏️" มุมขวาบน\n4. ช่องเวอร์ชัน เลือก "เวอร์ชัน 5 (v1.5.0)" แล้วกด "การทำให้ใช้งานได้" ค่ะ');
+              alert('⚠️ ตัว Web App ใน Google Apps Script ยังค้างอยู่ที่เวอร์ชัน 2 (@2) จึงยังไม่อ่านคอลัมน์ pin ที่เพิ่งแก้ในชีตค่ะ\n\nวิธีสลับเป็นเวอร์ชันล่าสุด (ทำครั้งเดียว):\n1. เปิดหน้า Google Apps Script\n2. กดปุ่ม "การทำให้ใช้งานได้" > "จัดการการทำให้ใช้งานได้"\n3. กดไอคอน "รูปดินสอ ✏️" มุมขวาบน\n4. ช่องเวอร์ชัน เลือก "เวอร์ชันใหม่" แล้วกด "การทำให้ใช้งานได้" ค่ะ');
             } else {
               alert('❌ ' + msg);
             }
@@ -2434,22 +2574,18 @@
     }
 
     function checkExistingAdminSession() {
-      try {
-        const saved = sessionStorage.getItem('fon_admin_session');
-        if (saved) {
-          const admin = JSON.parse(saved);
-          const greetingEl = document.getElementById('adminUserGreeting');
-          if (greetingEl) {
-            greetingEl.innerText = `ผู้ดูแลระบบ: ${admin.name} (${admin.org})`;
-          }
+      const admin = getStoredAdminSession();
+      if (admin) {
+        const greetingEl = document.getElementById('adminUserGreeting');
+        if (greetingEl) {
+          greetingEl.innerText = `ผู้ดูแลระบบ: ${admin.name} (${admin.org})`;
         }
-      } catch (e) {
-        // Ignore
       }
     }
 
     function adminSignOut() {
       sessionStorage.removeItem('fon_admin_session');
+      localStorage.removeItem('fon_admin_session_persist');
       switchView('public');
       showToast('ออกจากระบบผู้ดูแลเรียบร้อยแล้ว');
     }
@@ -2481,14 +2617,20 @@
       sel.innerHTML = optHtml;
     }
 
-    function loadAdminTickets() {
+    function loadAdminTickets(onDone) {
       checkExistingAdminSession();
       const apiUrl = getGasUrl();
 
       fetch(apiUrl + '?action=get_tickets&_t=' + Date.now(), { mode: 'cors' })
         .then(res => res.json())
-        .then(data => handleAdminTicketsResponse(data))
-        .catch(() => handleAdminTicketsResponse(getSampleAdminData()));
+        .then(data => {
+          handleAdminTicketsResponse(data);
+          if (typeof onDone === 'function') onDone();
+        })
+        .catch(() => {
+          handleAdminTicketsResponse(getSampleAdminData());
+          if (typeof onDone === 'function') onDone();
+        });
     }
 
     function refreshAdminData() {
@@ -2745,10 +2887,8 @@
     }
 
     function getCurrentLoggedAdmin() {
-      try {
-        const saved = sessionStorage.getItem('fon_admin_session');
-        if (saved) return JSON.parse(saved);
-      } catch (e) {}
+      const saved = getStoredAdminSession();
+      if (saved) return saved;
       return { name: 'ผู้ดูแลระบบ', org: 'คณะพยาบาลศาสตร์', email: '' };
     }
 
@@ -3862,6 +4002,7 @@
       }
 
       const apiUrl = getGasUrl();
+      const portalBase = window.location.origin + window.location.pathname.replace(/\/index\.html$/i, '');
       const postBody = {
         action: 'create_ticket',
         system_name: payload.system_name || 'ทั่วไป',
@@ -3870,6 +4011,7 @@
         reporter_contact: cleanContact,
         issue_type: payload.issue_type || 'ทั่วไป',
         issue_detail: finalIssueDetail,
+        portal_base_url: portalBase,
         math_answer: payload.math_answer || '',
         math_expected: payload.math_expected || ''
       };
